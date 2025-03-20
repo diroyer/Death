@@ -45,16 +45,16 @@ packer_start:
 
 ; commented this out cause of valgrind segfault
 .mprotect_data:
-	;lea rdi, [rel packer_start]
-	;add rdi, [rel offset_to_data]
-	;and rdi, ~(PAGE_SIZE - 1)
-	;
-	;mov rax, 10
-	;mov rsi, [rel data_page_size]
-	;;and rsi, ~(PAGE_SIZE - 1)
-	;mov rdx, PROT_READ | PROT_WRITE | PROT_EXEC
-	;
-	;syscall
+	lea rdi, [rel packer_start]
+	add rdi, [rel offset_to_data]
+	and rdi, ~(PAGE_SIZE - 1)
+
+	mov rax, 10
+	mov rsi, [rel data_page_size]
+	;and rsi, ~(PAGE_SIZE - 1)
+	mov rdx, PROT_READ | PROT_WRITE | PROT_EXEC
+
+	syscall
 
 .exit:
 	pop rdx
