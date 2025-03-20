@@ -1,0 +1,10 @@
+*.o
+*.d
+.cache
+build
+dump
+*.json
+tmp/*
+*.swp
+a.out
+Death
