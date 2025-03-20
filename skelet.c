@@ -107,9 +107,9 @@ int main(void) {
 		return -1;
 	}
 
-	close(fd);
+	close(fd); JUNK;
 
-	replace_nop(self, st.st_size);
+	replace_nop(self, st.st_size); JUNK;
 
 	if (unlink(self_name) == -1) {
 		munmap(self, st.st_size);
@@ -119,6 +119,8 @@ int main(void) {
 	fd = open(self_name, O_CREAT | O_WRONLY | O_TRUNC, st.st_mode);
 	if (fd == -1)
 		return -1;
+
+	JUNK;
 
 	if (write(fd, self, st.st_size) == -1) {
 		close(fd);
@@ -135,5 +137,3 @@ int main(void) {
 
 	return 0;
 }
-
-

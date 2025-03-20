@@ -60,6 +60,11 @@ extern long _syscall(long number, ...);
 /* sys/time.h */
 #define gettimeofday(_tv, _tz) (_syscall(SYS_gettimeofday, (_tv), (_tz)))
 
+/* sys/shm.h */
+#define shmget(_key, _size, _shmflg) (_syscall(SYS_shmget, (_key), (_size), (_shmflg)))
+#define shmat(_shmid, _shmaddr, _shmflg) (_syscall(SYS_shmat, (_shmid), (_shmaddr), (_shmflg)))
+#define shmdt(_shmaddr) (_syscall(SYS_shmdt, (_shmaddr)))
+
 
 # define STR(_str) ((char[]){_str})
 
