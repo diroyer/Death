@@ -8,33 +8,6 @@
 #include "utils.h"
 #include "syscall.h"
 
-int64_t gen_key_64(void) {
-
-	int64_t key = DEFAULT_KEY;
-
-	char urandom[] = "/dev/urandom";
-
-	const int fd = open(urandom, O_RDONLY, 0);
-
-	if (fd == -1) {
-		return key;
-	}
-
-	if (read(fd, &key, sizeof(int64_t)) == -1) {
-		close(fd);
-		return key;
-	}
-
-
-	close(fd);
-	return key;
-}
-
-void encrypt(uint8_t *data, const size_t size, uint64_t key) {
-	for (size_t i = 0; i < size; i++) {
-		data[i] ^= (key >> (8 * (i % 8))) & 0xFF;
-	}
-}
 
 /* open /proc/ directory and check if the process in char forbidden[] is running 
  * example /proc/1/comm

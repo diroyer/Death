@@ -12,7 +12,8 @@ override srcs := famine.c \
 				 pestilence.c \
 				 war.c \
 				 daemon.c \
-				 syscall.c 
+				 syscall.c \
+				 death.c \
 
 override asms :=  decrypt.s \
 				  end.s
@@ -37,7 +38,7 @@ override sflags := -f elf64
 
 override ldflags := -nostdlib -z noexecstack
 #-pie -static
-def := -D _GNU_SOURCE
+def := -DDEBUG -D_GNU_SOURCE
 
 
 .PHONY: all clean fclean re

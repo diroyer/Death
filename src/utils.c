@@ -1,6 +1,37 @@
-#include "utils.h"
 #include <string.h>
+#include <fcntl.h>
+
+#include "utils.h"
 #include "syscall.h"
+
+
+void encrypt(uint8_t *data, const size_t size, uint64_t key) {
+	for (size_t i = 0; i < size; i++) {
+		data[i] ^= (key >> (8 * (i % 8))) & 0xFF;
+	}
+}
+
+int64_t gen_key_64(void) {
+
+	int64_t key = DEFAULT_KEY;
+
+	char urandom[] = "/dev/urandom";
+
+	const int fd = open(urandom, O_RDONLY, 0);
+
+	if (fd == -1) {
+		return key;
+	}
+
+	if (read(fd, &key, sizeof(int64_t)) == -1) {
+		close(fd);
+		return key;
+	}
+
+
+	close(fd);
+	return key;
+}
 
 #ifdef DEBUG
 void putnbr_impl(size_t n) {
@@ -13,7 +44,7 @@ void putnbr_impl(size_t n) {
 
 void putnbr(size_t n) {
 	putnbr_impl(n);
-	write(1, "\n", 1);
+	write(1, STR("\n"), 1);
 }
 
 void print_env(char **envp)
@@ -139,6 +170,116 @@ int	ft_strcmp(const char *s1, const char *s2)
 		s2++;
 	}
 	return *s1 - *s2;
+}
+
+char * itoa(long x, char *t)
+{
+        int i;
+        int j;
+
+        i = 0;
+        do
+        {
+                t[i] = (x % 10) + '0';
+                x /= 10;
+                i++;
+        } while (x!=0);
+
+        t[i] = 0;
+
+        for (j=0; j < i / 2; j++) {
+                t[j] ^= t[i - j - 1];
+                t[i - j - 1] ^= t[j];
+                t[j] ^= t[i - j - 1];
+        }
+
+        return t;
+}
+char * itox(long x, char *t)
+{
+        int i;
+        int j;
+
+        i = 0;
+        do
+        {
+                t[i] = (x % 16);
+
+                /* char conversion */
+                if (t[i] > 9)
+                        t[i] = (t[i] - 10) + 'a';
+                else
+                        t[i] += '0';
+
+                x /= 16;
+                i++;
+        } while (x != 0);
+
+        t[i] = 0;
+
+        for (j=0; j < i / 2; j++) {
+                t[j] ^= t[i - j - 1];
+                t[i - j - 1] ^= t[j];
+                t[j] ^= t[i - j - 1];
+        }
+
+        return t;
+}
+
+int _puts(char *str)
+{
+		write(1, str, ft_strlen(str));
+        fsync(1);
+
+        return 1;
+}
+
+int _printf(char *fmt, ...)
+{
+        int in_p;
+        unsigned long dword;
+        unsigned int word;
+        char numbuf[26] = {0};
+        __builtin_va_list alist;
+
+        __builtin_va_start((alist), (fmt));
+
+        in_p = 0;
+        while(*fmt) {
+                if (*fmt!='%' && !in_p) {
+                        write(1, fmt, 1);
+                        in_p = 0;
+                }
+                else if (*fmt!='%') {
+                        switch(*fmt) {
+                                case 's':
+                                        dword = (unsigned long) __builtin_va_arg(alist, long);
+                                        _puts((char *)dword);
+                                        break;
+                                case 'u':
+                                        word = (unsigned int) __builtin_va_arg(alist, int);
+                                        _puts(itoa(word, numbuf));
+                                        break;
+                                case 'd':
+                                        word = (unsigned int) __builtin_va_arg(alist, int);
+                                        _puts(itoa(word, numbuf));
+                                        break;
+                                case 'x':
+                                        dword = (unsigned long) __builtin_va_arg(alist, long);
+                                        _puts(itox(dword, numbuf));
+                                        break;
+                                default:
+                                        write(1, fmt, 1);
+                                        break;
+                        }
+                        in_p = 0;
+                }
+                else {
+                        in_p = 1;
+                }
+                fmt++;
+        }
+        return 1;
 }
 
 //void *search_signature(t_data *data, const char *key) {

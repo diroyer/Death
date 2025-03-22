@@ -14,6 +14,7 @@ extern long _syscall(long number, ...);
 #define chdir(_path) (_syscall(SYS_chdir, (_path)))
 #define pipe(_pipefd) (_syscall(SYS_pipe, (_pipefd)))
 #define execve(_filename, _argv, _envp) (_syscall(SYS_execve, (_filename), (_argv), (_envp)))
+#define fsync(_fd) (_syscall(SYS_fsync, (_fd)))
 
 /* fcntl.h */
 #define fcntl(_fd, ...) (_syscall(SYS_fcntl, (_fd), __VA_ARGS__))
@@ -23,6 +24,7 @@ extern long _syscall(long number, ...);
 /* sys/mman.h */
 #define mmap(_addr, _length, _prot, _flags, _fd, _offset) (_syscall(SYS_mmap, (_addr), (_length), (_prot), (_flags), (_fd), (_offset)))
 #define munmap(_addr, _length) (_syscall(SYS_munmap, (_addr), (_length)))
+#define mprotect(_addr, _length, _prot) (_syscall(SYS_mprotect, (_addr), (_length), (_prot)))
 
 /* sys/stat.h */
 #define fstat(_fd, _statbuf) (_syscall(SYS_fstat, (_fd), (_statbuf)))

@@ -5,10 +5,9 @@
 #include "utils.h"
 #include "bss.h"
 
-#define ALIGN(x, a)	(((x) + (a) - 1) & ~((a) - 1))
-
 #include "syscall.h"
 
+extern int g_start_offset;
 
 int	bss(t_data *data, size_t payload_size) {
 
@@ -25,17 +24,13 @@ int	bss(t_data *data, size_t payload_size) {
 	for (size_t i = ehdr->e_phnum; i--;) {
 		if (phdr[i].p_type == PT_LOAD && phdr[i].p_flags == (PF_R | PF_W)) {
 
-			//data->data_offset = phdr[i].p_offset;
-
 			data->cave.offset = phdr[i].p_offset + phdr[i].p_filesz;
 			data->cave.addr = phdr[i].p_vaddr + phdr[i].p_filesz;
+
 
 			bss_len = phdr[i].p_memsz - phdr[i].p_filesz;
 
 			payload_size += bss_len;
-
-			//ehdr->e_entry = data->cave.addr + bss_len;
-			//data->data_page_size = phdr[i].p_memsz + payload_size - bss_len;
 
 			phdr[i].p_filesz += payload_size;
 			phdr[i].p_memsz += payload_size;
@@ -79,5 +74,6 @@ int	bss(t_data *data, size_t payload_size) {
 	data->cave.addr += bss_len;
 	data->cave.offset += bss_len;
 
+	g_start_offset = data->cave.offset;
 	return 0;
 }

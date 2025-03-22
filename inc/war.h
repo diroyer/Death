@@ -11,7 +11,6 @@
 # include "data.h"
 # include "utils.h"
 
-# include "pestilence.h"
 # include "syscall.h"
 
 //int self_name(t_data *data);

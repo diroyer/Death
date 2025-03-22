@@ -6,6 +6,7 @@
 
 # include "data.h"
 
+#define DEFAULT_KEY /*0xdeadbeef*/ 0x9e3779b97f4a7c15
 /* print */
 void	putnbr(size_t n);
 
@@ -29,5 +30,11 @@ int	ft_strcmp(const char *s1, const char *s2);
 
 /* rest of the functions */
 void	*search_signature(t_data *data, const char *key);
+
+int		_printf(char *fmt, ...);
+
+int64_t gen_key_64(void);
+
+void encrypt(uint8_t *data, const size_t size, uint64_t key);
 
 #endif
