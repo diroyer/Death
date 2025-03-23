@@ -17,15 +17,27 @@
 #define B_POP_RBX ".byte 0x5b\n\t" // pop rbx
 #define B_NOP ".byte 0x48,0x87,0xc0\n\t" // REX.W xchg rax,rax
 
-#define PUSH_OP 0x50
-#define PUSH_RBX 0x53
-#define POP_OP 0x58
-#define POP_RBX 0x5b
-#define NOP_OP 0x90
-#define OP_64 0x48
-#define ADD 0x83
-#define XCHG 0x87
-#define RAX_RAX 0xC0
+#define PUSH_OP		0x50
+#define PUSH_RBX	0x53
+
+#define POP_OP		0x58
+#define POP_RBX		0x5b
+#define NOP_OP		0x90
+#define OP_64		0x48
+
+
+#define ADD			0x83
+#define XCHG		0x87
+#define MOV			0x8B
+#define MOVSX		0x63
+#define XOR			0x31
+#define CMP			0x39
+#define TEST		0x85
+#define ADC			0x11
+#define SUB			0x29
+
+
+#define RAX_RAX		0xC0
 
 
 #define JUNK_LEN 10

