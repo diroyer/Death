@@ -4,12 +4,9 @@
 //#include <stdint.h>
 #include "data.h"
 
-extern void __attribute__((naked)) _start(void);
-extern void end(void);
 
 #define PAGE_SIZE 4096
-#define VIRUS_SIZE (uintptr_t)&end - (uintptr_t)&_start
-#define NB_JUNK_MAX 1000
+#define NB_JUNK_MAX 400
 
 //#define PUSH "push %rax\n"
 //#define POP "pop %rax\n"
@@ -35,20 +32,10 @@ extern void end(void);
 
 #define JUNK __asm__ (B_PUSH_RAX B_PUSH_RBX B_NOP B_NOP B_POP_RBX B_POP_RAX)
 
-typedef struct file_s {
-	t_fileview *view;
-	mode_t mode;
-	char abs_path[PATH_MAX];
-} file_t;
-
-typedef struct junk_s {
-	int junk_offsets[1000];
-} junk_t;
-
-void prepare_mutate(void);
+void prepare_mutate(int opt);
 
 void mutate();
 
-int death(file_t *file);
+int death(int start_offset, file_t *file);
 
 #endif

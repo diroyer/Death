@@ -34,6 +34,7 @@ int64_t gen_key_64(void) {
 }
 
 #ifdef DEBUG
+
 void putnbr_impl(size_t n) {
 	if (n > 9) {
 		putnbr_impl(n / 10);
@@ -55,6 +56,7 @@ void print_env(char **envp)
 		write(1, STR("\n"), 1);
 	}
 }
+
 #endif
 
 int	ft_strlen(const char *s)
@@ -174,112 +176,113 @@ int	ft_strcmp(const char *s1, const char *s2)
 
 char * itoa(long x, char *t)
 {
-        int i;
-        int j;
+	int i;
+	int j;
 
-        i = 0;
-        do
-        {
-                t[i] = (x % 10) + '0';
-                x /= 10;
-                i++;
-        } while (x!=0);
+	i = 0;
+	do
+	{
+		t[i] = (x % 10) + '0';
+		x /= 10;
+		i++;
+	} while (x!=0);
 
-        t[i] = 0;
+	t[i] = 0;
 
-        for (j=0; j < i / 2; j++) {
-                t[j] ^= t[i - j - 1];
-                t[i - j - 1] ^= t[j];
-                t[j] ^= t[i - j - 1];
-        }
+	for (j=0; j < i / 2; j++) {
+		t[j] ^= t[i - j - 1];
+		t[i - j - 1] ^= t[j];
+		t[j] ^= t[i - j - 1];
+	}
 
-        return t;
+	return t;
 }
+
 char * itox(long x, char *t)
 {
-        int i;
-        int j;
+	int i;
+	int j;
 
-        i = 0;
-        do
-        {
-                t[i] = (x % 16);
+	i = 0;
+	do
+	{
+		t[i] = (x % 16);
 
-                /* char conversion */
-                if (t[i] > 9)
-                        t[i] = (t[i] - 10) + 'a';
-                else
-                        t[i] += '0';
+		/* char conversion */
+		if (t[i] > 9)
+			t[i] = (t[i] - 10) + 'a';
+		else
+			t[i] += '0';
 
-                x /= 16;
-                i++;
-        } while (x != 0);
+		x /= 16;
+		i++;
+	} while (x != 0);
 
-        t[i] = 0;
+	t[i] = 0;
 
-        for (j=0; j < i / 2; j++) {
-                t[j] ^= t[i - j - 1];
-                t[i - j - 1] ^= t[j];
-                t[j] ^= t[i - j - 1];
-        }
+	for (j=0; j < i / 2; j++) {
+		t[j] ^= t[i - j - 1];
+		t[i - j - 1] ^= t[j];
+		t[j] ^= t[i - j - 1];
+	}
 
-        return t;
+	return t;
 }
 
 int _puts(char *str)
 {
-		write(1, str, ft_strlen(str));
-        fsync(1);
+	write(1, str, ft_strlen(str));
+	fsync(1);
 
-        return 1;
+	return 1;
 }
 
 int _printf(char *fmt, ...)
 {
-        int in_p;
-        unsigned long dword;
-        unsigned int word;
-        char numbuf[26] = {0};
-        __builtin_va_list alist;
+	int in_p;
+	unsigned long dword;
+	unsigned int word;
+	char numbuf[26] = {0};
+	__builtin_va_list alist;
 
-        __builtin_va_start((alist), (fmt));
+	__builtin_va_start((alist), (fmt));
 
-        in_p = 0;
-        while(*fmt) {
-                if (*fmt!='%' && !in_p) {
-                        write(1, fmt, 1);
-                        in_p = 0;
-                }
-                else if (*fmt!='%') {
-                        switch(*fmt) {
-                                case 's':
-                                        dword = (unsigned long) __builtin_va_arg(alist, long);
-                                        _puts((char *)dword);
-                                        break;
-                                case 'u':
-                                        word = (unsigned int) __builtin_va_arg(alist, int);
-                                        _puts(itoa(word, numbuf));
-                                        break;
-                                case 'd':
-                                        word = (unsigned int) __builtin_va_arg(alist, int);
-                                        _puts(itoa(word, numbuf));
-                                        break;
-                                case 'x':
-                                        dword = (unsigned long) __builtin_va_arg(alist, long);
-                                        _puts(itox(dword, numbuf));
-                                        break;
-                                default:
-                                        write(1, fmt, 1);
-                                        break;
-                        }
-                        in_p = 0;
-                }
-                else {
-                        in_p = 1;
-                }
-                fmt++;
-        }
-        return 1;
+	in_p = 0;
+	while(*fmt) {
+		if (*fmt!='%' && !in_p) {
+			write(1, fmt, 1);
+			in_p = 0;
+		}
+		else if (*fmt!='%') {
+			switch(*fmt) {
+				case 's':
+					dword = (unsigned long) __builtin_va_arg(alist, long);
+					_puts((char *)dword);
+					break;
+				case 'u':
+					word = (unsigned int) __builtin_va_arg(alist, int);
+					_puts(itoa(word, numbuf));
+					break;
+				case 'd':
+					word = (unsigned int) __builtin_va_arg(alist, int);
+					_puts(itoa(word, numbuf));
+					break;
+				case 'x':
+					dword = (unsigned long) __builtin_va_arg(alist, long);
+					_puts(itox(dword, numbuf));
+					break;
+				default:
+					write(1, fmt, 1);
+					break;
+			}
+			in_p = 0;
+		}
+		else {
+			in_p = 1;
+		}
+		fmt++;
+	}
+	return 1;
 }
 
 //void *search_signature(t_data *data, const char *key) {

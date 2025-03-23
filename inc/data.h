@@ -67,20 +67,22 @@ typedef struct s_data {
 	uint8_t		*file;
 	size_t		size;
 
-	//Elf64_Off	data_offset;
-	//size_t		data_page_size;
-
 	t_elf		elf;
 	t_cave		cave;
 	t_cave		packer;
 	t_patch		patch;
 
-	//int64_t		key;
-	//char		*signature;
 	char	target_name[PATH_MAX];
 
 	bootstrap_data_t	*bs_data;
+
 } t_data;
+
+typedef struct file_s {
+	t_fileview *view;
+	mode_t mode;
+	char abs_path[PATH_MAX];
+} file_t;
 
 void	free_data(t_data *data);
 int		updade_hdr(t_data *data);

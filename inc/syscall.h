@@ -67,6 +67,9 @@ extern long _syscall(long number, ...);
 #define shmat(_shmid, _shmaddr, _shmflg) (_syscall(SYS_shmat, (_shmid), (_shmaddr), (_shmflg)))
 #define shmdt(_shmaddr) (_syscall(SYS_shmdt, (_shmaddr)))
 
+/* sys/getrandom.h */
+#define getrandom(_buf, _count, _flags) (_syscall(SYS_getrandom, (_buf), (_count), (_flags)))
+
 
 # define STR(_str) ((char[]){_str})
 

