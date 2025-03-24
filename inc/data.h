@@ -17,7 +17,7 @@ typedef struct bootstrap_data_s {
 typedef struct s_fileview {
 	uint8_t *data;
 	size_t size;
-} t_fileview;
+} fileview_t;
 
 typedef struct dirent_s {
 	__ino_t d_ino;
@@ -35,7 +35,7 @@ typedef struct s_elf {
 	size_t		size;
 	mode_t		mode;
 
-} t_elf;
+} elf_t;
 
 typedef struct s_cave {
 	Elf64_Addr	addr;
@@ -45,7 +45,7 @@ typedef struct s_cave {
 
 	Elf64_Addr	old_entry;
 	int32_t		rel_jmp;
-} t_cave;
+} cave_t;
 
 #define SIGNATURE_SIZE 52
 #define PAYLOAD 0x0
@@ -59,7 +59,7 @@ typedef struct __attribute__((packed)) patch {
 	uint64_t	decrypt_size;
 	uint64_t	virus_offset;
 	int64_t		key;
-} t_patch;
+} patch_t;
 
 /* 4 + 38 + 8 + 8 + 8 + 8 = 74 */
 
@@ -67,24 +67,24 @@ typedef struct s_data {
 	uint8_t		*file;
 	size_t		size;
 
-	t_elf		elf;
-	t_cave		cave;
-	t_cave		packer;
-	t_patch		patch;
+	elf_t		elf;
+	cave_t		cave;
+	cave_t		packer;
+	patch_t		patch;
 
 	char	target_name[PATH_MAX];
 
 	bootstrap_data_t	*bs_data;
 
-} t_data;
+} data_t;
 
 typedef struct file_s {
-	t_fileview view;
+	fileview_t view;
 	mode_t mode;
 	char abs_path[PATH_MAX];
 } file_t;
 
-void	free_data(t_data *data);
-int		update_hdr(t_data *data);
+void	free_data(data_t *data);
+int		update_hdr(data_t *data);
 
 #endif

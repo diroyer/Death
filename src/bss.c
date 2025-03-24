@@ -10,7 +10,7 @@
 
 extern int g_start_offset;
 
-int	bss(t_data *data, size_t payload_size) {
+int	bss(data_t *data, size_t payload_size) {
 
 	Elf64_Phdr	*phdr = data->elf.phdr;
 	Elf64_Shdr	*shdr = data->elf.shdr;

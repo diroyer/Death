@@ -76,7 +76,7 @@ int get_bss_size(int fd, uint64_t* bss_len) {
 }
 
 
-int map_file(const char *filename, t_data *data) {
+int map_file(const char *filename, data_t *data) {
 	int		fd;
 	uint8_t	*file;
 	struct stat st;

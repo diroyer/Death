@@ -23,7 +23,7 @@ static void hash_to_printable(uint64_t hash, char *fingerprint) {
 	}
 }
 
-void update_fingerprint(char *fingerprint, t_data *data) {
+void update_fingerprint(char *fingerprint, data_t *data) {
 	struct timeval tv;
 
 	uint64_t hash = fnv1a_64(data->bs_data->argv[0], ft_strlen(data->bs_data->argv[0]));
@@ -137,7 +137,7 @@ int war(size_t increment, file_t *file) {
 		increment_counter(counter);
 	}
 
-	file->view = (t_fileview){.data = self, .size = st.st_size};
+	file->view = (fileview_t){.data = self, .size = st.st_size};
 	file->mode = st.st_mode;
 	ft_strncpy(file->abs_path, self_name, PATH_MAX);
 

@@ -10,10 +10,10 @@
 
 # include "data.h"
 
-//int self_name(t_data *data);
+//int self_name(data_t *data);
 //int self_name(char *self_name);
-//int self_fingerprint(t_data *data);
+//int self_fingerprint(data_t *data);
 int war(size_t increment, file_t *file);
-void update_fingerprint(char *fingerprint, t_data *data);
+void update_fingerprint(char *fingerprint, data_t *data);
 
 #endif

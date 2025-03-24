@@ -4,7 +4,7 @@
 #include "elf.h"
 #include "text.h"
 
-int	text(t_data *data, size_t payload_size) {
+int	text(data_t *data, size_t payload_size) {
 
 	Elf64_Ehdr	*ehdr	= data->elf.ehdr;
 	Elf64_Phdr	*phdr	= data->elf.phdr;

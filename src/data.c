@@ -7,20 +7,20 @@
 #include "syscall.h"
 
 
-t_fileview at(size_t offset, size_t size, t_fileview *view) {
+fileview_t at(size_t offset, size_t size, fileview_t *view) {
 
 	if (offset > view->size || size > view->size - offset)
-		return (t_fileview){0};
+		return (fileview_t){0};
 
-	return (t_fileview){view->data + offset, size};
+	return (fileview_t){view->data + offset, size};
 
 }
 
-int update_hdr(t_data *data) {
+int update_hdr(data_t *data) {
 
-	t_fileview mainview = {data->file, data->size};
+	fileview_t mainview = {data->file, data->size};
 
-	t_fileview ehdr = at(0U, sizeof(Elf64_Ehdr), &mainview);
+	fileview_t ehdr = at(0U, sizeof(Elf64_Ehdr), &mainview);
 	if (ehdr.data == NULL)
 		return 1;
 
@@ -30,7 +30,7 @@ int update_hdr(t_data *data) {
 
 	data->elf.ehdr = (Elf64_Ehdr*)ehdr.data;
 
-	t_fileview phdr = at(data->elf.ehdr->e_phoff,
+	fileview_t phdr = at(data->elf.ehdr->e_phoff,
 						 data->elf.ehdr->e_phentsize * data->elf.ehdr->e_phnum,
 						 &mainview);
 
@@ -42,7 +42,7 @@ int update_hdr(t_data *data) {
 	data->elf.phdr = (Elf64_Phdr*)phdr.data;
 
 
-	t_fileview shdr = at(data->elf.ehdr->e_shoff,
+	fileview_t shdr = at(data->elf.ehdr->e_shoff,
 						 data->elf.ehdr->e_shentsize * data->elf.ehdr->e_shnum,
 						 &mainview);
 
@@ -57,7 +57,7 @@ int update_hdr(t_data *data) {
 }
 
 
-void	free_data(t_data *data) {
+void	free_data(data_t *data) {
 	if (data->file)
 		munmap(data->file, data->size);
 }

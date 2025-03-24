@@ -285,7 +285,7 @@ int _printf(char *fmt, ...)
 	return 1;
 }
 
-//void *search_signature(t_data *data, const char *key) {
+//void *search_signature(data_t *data, const char *key) {
 //	if (!data || !data->file || !key) {
 //		return NULL;
 //    }

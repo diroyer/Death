@@ -4,7 +4,7 @@
 # include <stdint.h>
 # include <sys/types.h>
 
-typedef struct s_data t_data;
+typedef struct s_data data_t;
 
 #define DEFAULT_KEY /*0xdeadbeef*/ 0x9e3779b97f4a7c15
 /* print */
@@ -29,7 +29,7 @@ char *ft_strncpy(char *dst, const char *src, size_t sz);
 int	ft_strcmp(const char *s1, const char *s2);
 
 /* rest of the functions */
-void	*search_signature(t_data *data, const char *key);
+void	*search_signature(data_t *data, const char *key);
 
 int		_printf(char *fmt, ...);
 
