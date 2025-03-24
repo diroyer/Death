@@ -373,7 +373,6 @@ void	entrypoint(int argc, char **argv, char **envp)
 	prepare_mutate();
 	mutate();
 
-
 	daemonize(envp);
 
 	famine(&bootstrap_data, &counter);
