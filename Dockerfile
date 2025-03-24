@@ -23,19 +23,16 @@ RUN apt-get update && apt-get install -y \
 
 # Install Oh My Zsh
 
-RUN useradd -ms /bin/bash docker
+#RUN useradd -ms /bin/bash docker
+#
+#USER docker
+#
+#WORKDIR /home/docker
 
-USER docker
-
-WORKDIR /home/docker
+WORKDIR /root/docker
 
 COPY . .
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
 # Set Zsh as default shell
 CMD ["zsh"]
-
-
-#RUN useradd -ms /bin/zsh docker
-#USER docker
-#WORKDIR /home/docker
