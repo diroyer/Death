@@ -123,7 +123,6 @@ static int forbid_proc(void)
 	return 0;
 }
 
-#
 static int is_debugged(void) {
 
 	int res = 0;
@@ -199,5 +198,3 @@ int pestilence(void)
 //		key ^= 0x9e3779b97f4a7c15;
 //	}
 //}
-
-

@@ -1,11 +1,11 @@
 #ifndef DEATH_H
 #define DEATH_H
 
-//#include <stdint.h>
-#include "data.h"
+#include <stdint.h>
+#include <stddef.h>
+//#include "data.h"
+typedef struct file_s file_t;
 
-
-#define PAGE_SIZE 4096
 #define NB_JUNK_MAX 400
 
 //#define PUSH "push %rax\n"
@@ -24,30 +24,19 @@
 #define POP_RBX		0x5b
 #define NOP_OP		0x90
 #define OP_64		0x48
-
-
-#define ADD			0x83
 #define XCHG		0x87
-#define MOV			0x8B
-#define MOVSX		0x63
-#define XOR			0x31
-#define CMP			0x39
-#define TEST		0x85
-#define ADC			0x11
-#define SUB			0x29
-
-
 #define RAX_RAX		0xC0
-
 
 #define JUNK_LEN 10
 
-#define JUNK __asm__ (B_PUSH_RAX B_PUSH_RBX B_NOP B_NOP B_POP_RBX B_POP_RAX)
+#define JUNK __asm__ __volatile__ (B_PUSH_RAX B_PUSH_RBX B_NOP B_NOP B_POP_RBX B_POP_RAX)
 
-void prepare_mutate(int opt);
+void prepare_mutate(void);
 
-void mutate();
+void mutate(void);
 
 int death(int start_offset, file_t *file);
+
+#define RAND_SIZE 4096
 
 #endif

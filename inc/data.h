@@ -79,12 +79,12 @@ typedef struct s_data {
 } t_data;
 
 typedef struct file_s {
-	t_fileview *view;
+	t_fileview view;
 	mode_t mode;
 	char abs_path[PATH_MAX];
 } file_t;
 
 void	free_data(t_data *data);
-int		updade_hdr(t_data *data);
+int		update_hdr(t_data *data);
 
 #endif

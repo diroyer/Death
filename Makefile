@@ -28,7 +28,7 @@ override deps := $(srcs:%.c=%.d)
 
 
 override cflags := -fpic -nostdlib -I./inc -fcf-protection=none -g \
-					-Wall -Wextra -Werror -Wpedantic -std=c17
+					-Wall -Wextra -Werror -Wpedantic -std=c17 -O0 
 # -no-pie -fno-stack-protector -fno-builtin 
 #-fpic -fno-stack-protector -nodefaultlibs -fno-builtin -fno-omit-frame-pointer -pie -static
 
@@ -50,7 +50,7 @@ $(name): $(objs)
 
 -include $(deps)
 src/%.o: src/%.c Makefile
-	gcc $(cflags) $(depflags) -c $< -o $@ $(def) -D _GNU_SOURCE
+	gcc $(cflags) $(depflags) -c $< -o $@ $(def) -D _GNU_SOURCE -D PAGE_SIZE=4096
 
 src/%.o: src/%.s Makefile
 	nasm $(sflags) -o $@ $<

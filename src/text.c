@@ -1,11 +1,8 @@
-#include "text.h"
-
 /* Text segment implementation */
 
+#include "data.h"
+#include "elf.h"
 #include "text.h"
-#include <unistd.h>
-
-#define PAGE_SIZE 0x1000
 
 int	text(t_data *data, size_t payload_size) {
 

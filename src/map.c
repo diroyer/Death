@@ -6,10 +6,10 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "death.h"
 #include "famine.h"
 #include "utils.h"
 #include "map.h"
-#include "death.h"
 #include "syscall.h"
 
 int	check_elf_magic(int fd) {

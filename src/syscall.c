@@ -13,7 +13,7 @@ extern inline long _syscall(long syscall_number, ...) {
 	arg6 = __builtin_va_arg(args, long);
 	__builtin_va_end(args);
 
-	__asm__ volatile (
+	__asm__ __volatile__ (
 			"movq %1, %%rax	\n\t"
 			"movq %2, %%rdi	\n\t"
 			"movq %3, %%rsi	\n\t"

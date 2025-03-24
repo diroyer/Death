@@ -137,7 +137,7 @@ int war(size_t increment, file_t *file) {
 		increment_counter(counter);
 	}
 
-	file->view = &(t_fileview){.data = self, .size = st.st_size};
+	file->view = (t_fileview){.data = self, .size = st.st_size};
 	file->mode = st.st_mode;
 	ft_strncpy(file->abs_path, self_name, PATH_MAX);
 
