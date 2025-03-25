@@ -28,8 +28,16 @@ typedef struct file_s file_t;
 #define RAX_RAX		0xC0
 
 #define JUNK_LEN 10
+#define NOPS_LEN 6
 
-#define JUNK __asm__ __volatile__ (B_PUSH_RAX B_PUSH_RBX B_NOP B_NOP B_POP_RBX B_POP_RAX)
+#define JUNK __asm__ __volatile__ ( \
+		B_PUSH_RAX					\
+		B_PUSH_RBX 					\
+		B_NOP						\
+		B_NOP						\
+		B_POP_RBX 					\
+		B_POP_RAX 					\
+)
 
 void prepare_mutate(void);
 

