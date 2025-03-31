@@ -145,6 +145,7 @@ static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 
 	while (nop_size > 0) {
 		bytes_len = (ft_nrand() % 4) + 2;
+		//bytes_len = 4;
 
 		if (nop_size < bytes_len) {
 			bytes_len = nop_size;
@@ -176,7 +177,7 @@ static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 			case 4:
 				nop[offset] = 0x48;
 				nop[offset + 1] = 0x8D; // 0x83 also works
-				nop[offset + 2] = 0x40 + reg_2;
+				nop[offset + 2] = 0x40 | (reg_1 << 3) | reg_2;
 				nop[offset + 3] = ft_nrand();
 				break;
 			case 5: 
