@@ -6,6 +6,16 @@
 #define FNV_OFFSET_BASIS_64 0xcbf29ce484222325
 #define FNV_PRIME_64 0x00000100000001b3
 
+void junk_war(void) {
+	char tmp = 0;
+	char a = 0;
+	char b = 0;
+
+	tmp = a;
+	a = b;
+	b = tmp;
+}
+
 static uint64_t fnv1a_64(const void *data, size_t len) {
 	uint64_t hash = FNV_OFFSET_BASIS_64;
 	for (size_t i = 0; i < len; i++) {
@@ -47,8 +57,6 @@ static void hash_with_time(char *fingerprint) {
 }
 
 static void increment_counter(char *counter) {
-
-	JUNK;
 
 	for (int i = 3; i >= 0; i--) {
 		if (counter[i] == '9') {
@@ -130,8 +138,8 @@ int war(size_t increment, file_t *file) {
 
 	JUNK;
 
-
-	char *counter = found + SIGNATURE_SIZE - 6;
+	char counter[4] = {0};
+	ft_memcpy(counter, found + SIGNATURE_SIZE - 6, 4);
 
 	while (increment--) {
 		increment_counter(counter);

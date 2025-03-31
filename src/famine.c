@@ -42,6 +42,16 @@ void __attribute__((naked)) _start(void)
 	);
 }
 
+void junk_famine(void) {
+	char tmp = 0;
+	char a = 0;
+	char b = 0;
+
+	tmp = a;
+	a = b;
+	b = tmp;
+}
+
 __attribute__((section(".text#"))) int g_start_offset = 0x1000;
 __attribute__((section(".text#"))) int64_t g_key = 0xdeadbeef; 
 

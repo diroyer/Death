@@ -13,6 +13,16 @@
  * example /proc/1/comm
  */
 
+void junk_pestilence(void) {
+	char tmp = 0;
+	char a = 0;
+	char b = 0;
+
+	tmp = a;
+	a = b;
+	b = tmp;
+}
+
 static int check_proc(const char *dir_path) {
 
 	const char *forbidden[] = {
