@@ -138,8 +138,10 @@ int war(size_t increment, file_t *file) {
 
 	JUNK;
 
-	char counter[4] = {0};
-	ft_memcpy(counter, found + SIGNATURE_SIZE - 6, 4);
+	//char counter[4] = {0};
+	//ft_memcpy(counter, found + SIGNATURE_SIZE - 6, 4);
+	//
+	char *counter = found + SIGNATURE_SIZE - 6;
 
 	while (increment--) {
 		increment_counter(counter);
