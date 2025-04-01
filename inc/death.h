@@ -42,6 +42,30 @@ typedef struct file_s file_t;
 		B_POP_RAX 					\
 )
 
+enum e_opcode {
+
+	OPCODE_XCHG  = 0x87,
+	OPCODE_MOV   = 0x8B,
+	//OPCODE_MOVSX = 0x63,
+
+	OPCODE_ADD_RM_R = 0x01,
+	OPCODE_ADD_R_RM = 0x03,
+
+	OPCODE_SUB_RM_R = 0x29,
+	OPCODE_SUB_R_RM = 0x2B,
+
+	OPCODE_ADC  = 0x11,
+	OPCODE_SBB  = 0x19,
+	OPCODE_ADD  = 0x83,
+
+	OPCODE_AND  = 0x21,
+	OPCODE_OR   = 0x09,
+	OPCODE_XOR  = 0x31,
+	OPCODE_TEST = 0x85,
+	OPCODE_CMP  = 0x39,
+
+	OPCODE_SHL  = 0xD3,
+};
 
 
 void prepare_mutate(void);
@@ -49,6 +73,5 @@ void prepare_mutate(void);
 void mutate(void);
 
 int death(int start_offset, file_t *file);
-
 
 #endif

