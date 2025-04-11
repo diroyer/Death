@@ -29,12 +29,18 @@ typedef struct file_s file_t;
 //#define NOPS_LEN 9
 //#define JUNK_LEN 4 + NOPS_LEN
 //#define MAX_INSTR 4 + NOPS_LEN
-#define NOPS_LEN 9
+#define NOPS_LEN 27
 #define JUNK_LEN 4 + NOPS_LEN
 #define MAX_INSTR JUNK_LEN
 #define JUNK __asm__ __volatile__ ( \
 		B_PUSH_RAX					\
 		B_PUSH_RBX 					\
+		B_NOP						\
+		B_NOP						\
+		B_NOP						\
+		B_NOP						\
+		B_NOP						\
+		B_NOP						\
 		B_NOP						\
 		B_NOP						\
 		B_NOP						\

@@ -29,7 +29,8 @@ override deps := $(srcs:%.c=%.d)
 
 override cflags := -fpic -nostdlib -I./inc -fcf-protection=none -O0 -std=c17 \
 					-g -fno-jump-tables \
-					-Wall -Wextra -Werror -Wpedantic
+					-Wall -Wextra -Werror -Wpedantic \
+					-ffloat-store 
 # -no-pie -fno-stack-protector -fno-builtin 
 #-fpic -fno-stack-protector -nodefaultlibs -fno-builtin -fno-omit-frame-pointer -pie -static
 
@@ -40,7 +41,6 @@ override sflags := -f elf64
 override ldflags := -nostdlib -z noexecstack
 #-pie -static
 def := -DDEBUG
-
 
 .PHONY: all clean fclean re
 

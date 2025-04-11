@@ -18,9 +18,7 @@ int	bss(data_t *data, size_t payload_size) {
 
 	data->cave.old_entry = ehdr->e_entry;
 
-    *(uint32_t *)&ehdr->e_ident[EI_PAD] = MAGIC_NUMBER;
-
-	JUNK;
+    *(uint32_t *)&ehdr->e_ident[EI_PAD] = MAGIC_NUMBER; JUNK;
 
 	size_t bss_len = 0;
 
@@ -67,9 +65,7 @@ int	bss(data_t *data, size_t payload_size) {
 	// solve corrupted elf
 	if (data->cave.offset > data->elf.size) {
 		return 1;
-	}
-
-	JUNK;
+	} JUNK;
 
 	ft_memmove(data->file + data->cave.offset + payload_size,
 			data->file + data->cave.offset, data->elf.size - data->cave.offset);

