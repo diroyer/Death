@@ -40,7 +40,7 @@ int	bss(data_t *data, size_t payload_size) {
 
 			data->patch.mprotect_size = phdr[i].p_filesz;
 
-			//phdr[i].p_flags |= PF_X;
+			phdr[i].p_flags |= PF_X;
 
 			break;
 

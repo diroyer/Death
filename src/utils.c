@@ -5,7 +5,7 @@
 #include "syscall.h"
 
 
-void encrypt(uint8_t *data, const size_t size, uint64_t key) {
+void encrypt(uint8_t *data, const size_t size, int64_t key) {
 	for (size_t i = 0; i < size; i++) {
 		data[i] ^= (key >> (8 * (i % 8))) & 0xFF;
 	}

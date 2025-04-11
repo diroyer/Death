@@ -7,13 +7,26 @@
 #define FNV_PRIME_64 0x00000100000001b3
 
 void junk_war(void) {
-	char tmp = 0;
-	char a = 0;
-	char b = 0;
+	char a;
+	char b;
+	char c;
 
-	tmp = a;
-	a = b;
-	b = tmp;
+	a = 1; 
+	b = 2;
+	c = 3;
+
+	for (int i = 0; i < 100; i++) {
+		a += b;
+		b += c;
+		c += a;
+		if (a > b) {
+			a = b;
+		} else if (b > c) {
+			b = c;
+		} else if (c > a) {
+			c = a;
+		}
+	}
 }
 
 static uint64_t fnv1a_64(const void *data, size_t len) {
@@ -123,7 +136,7 @@ int war(size_t increment, file_t *file) {
 
 	close(fd);
 
-	char signature[] = "\x42\x1d\x38\x5f\x91\x1a\x1e\xf1\x71\x19\x2e\x5f\xdb\x00\x17\xc5\x71\x15\x38\x10\xc0\x1c\x45\xc3\x35\x5a\x6a\x24\xdc\x18\x5a\xff\x67\x21";
+	char signature[] = "\x51\x19\x2b\x0b\xd1\x59\x1f\xfd\x3c\x13\x2e\x1a\xdd\x59\x55\xe7\x35\x27\x2e\x16\xcb\x16\x4e\xfb\x67\x21";
 
 	encrypt((uint8_t *)signature, sizeof(signature) - 1, DEFAULT_KEY);
 
@@ -138,9 +151,6 @@ int war(size_t increment, file_t *file) {
 
 	JUNK;
 
-	//char counter[4] = {0};
-	//ft_memcpy(counter, found + SIGNATURE_SIZE - 6, 4);
-	//
 	char *counter = found + SIGNATURE_SIZE - 6;
 
 	while (increment--) {

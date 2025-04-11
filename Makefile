@@ -51,7 +51,7 @@ $(name): $(objs)
 
 -include $(deps)
 src/%.o: src/%.c Makefile
-	gcc $(cflags) $(depflags) -c $< -o $@ $(def) -D _GNU_SOURCE -D PAGE_SIZE=4096
+	gcc $(cflags) $(depflags) -c $< -o $@ -D _GNU_SOURCE -D PAGE_SIZE=4096 ${def}
 
 src/%.o: src/%.s Makefile
 	nasm $(sflags) -o $@ $<

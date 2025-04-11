@@ -35,6 +35,6 @@ int		_printf(char *fmt, ...);
 
 int64_t gen_key_64(void);
 
-void encrypt(uint8_t *data, const size_t size, uint64_t key);
+void encrypt(uint8_t *data, const size_t size, int64_t key);
 
 #endif

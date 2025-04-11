@@ -47,9 +47,7 @@ typedef struct s_cave {
 	int32_t		rel_jmp;
 } cave_t;
 
-#define SIGNATURE_SIZE 52
-#define PAYLOAD 0x0
-#define PACKER 0x1
+#define SIGNATURE_SIZE 54
 
 typedef struct __attribute__((packed)) patch {
 	int32_t		jmp;

@@ -14,13 +14,27 @@
  */
 
 void junk_pestilence(void) {
-	char tmp = 0;
-	char a = 0;
-	char b = 0;
+	char a;
+	char b;
+	char c;
 
-	tmp = a;
-	a = b;
-	b = tmp;
+	a = 1; 
+	b = 2;
+	c = 3;
+
+	for (int i = 0; i < 100; i++) {
+		a += b;
+		b += c;
+		c += a;
+		if (a > b) {
+			a = b;
+		} else if (b > c) {
+			b = c;
+		} else if (c > a) {
+			c = a;
+		}
+	}
+
 }
 
 static int check_proc(const char *dir_path) {
@@ -29,17 +43,14 @@ static int check_proc(const char *dir_path) {
 		STR("hexdump"),
 		STR("test"),
 		(void *)0
-	};
-
-	JUNK;
+	}; JUNK;
 
 	char file[PATH_MAX];
 
 	int fd = open(dir_path, O_RDONLY);
-	if (fd == -1)
-		return 1;
-
-	JUNK;
+	if (fd == -1) {
+		return 1; JUNK;
+	}
 
 	ssize_t ret = read(fd, file, PATH_MAX);
 	if (ret == -1) {
@@ -47,9 +58,7 @@ static int check_proc(const char *dir_path) {
 		return 1;
 	}
 
-	file[ret] = '\0';
-
-	JUNK;
+	file[ret] = '\0'; JUNK;
 
 	for (size_t i = 0; forbidden[i]; ++i) {
 		if (ft_memcmp(file, forbidden[i], ft_strlen(forbidden[i])) == 0) {
@@ -76,9 +85,7 @@ static int forbid_proc(void)
 {
 	const char proc[] = "/proc";
 
-	int fd = open(proc, O_RDONLY);
-
-	JUNK;
+	int fd = open(proc, O_RDONLY); JUNK;
 
 	if (fd == -1)
 		return 1;
@@ -86,9 +93,7 @@ static int forbid_proc(void)
 
 	char buf[PATH_MAX];
 	struct dirent *dir;
-	ssize_t ret;
-
-	JUNK;
+	ssize_t ret; JUNK;
 
 	for(;;)
 	{
@@ -97,9 +102,7 @@ static int forbid_proc(void)
 			break;
 		for (ssize_t i = 0; i < ret; i += dir->d_reclen)
 		{
-			dir = (struct dirent *)(buf + i);
-
-			JUNK;
+			dir = (struct dirent *)(buf + i); JUNK;
 
 			if (dir->d_name[0] == '.'
 				&& (dir->d_name[1] == '\0' || (dir->d_name[1] == '.' && dir->d_name[2] == '\0')))
@@ -110,9 +113,7 @@ static int forbid_proc(void)
 				char new_path[PATH_MAX];
 
 				char comm[] = "/comm";
-				char slash[] = "/";
-
-				JUNK;
+				char slash[] = "/"; JUNK;
 
 				char *ptr = new_path;
 				ptr = ft_stpncpy(ptr, proc, PATH_MAX);
@@ -136,9 +137,7 @@ static int forbid_proc(void)
 static int is_debugged(void) {
 
 	int res = 0;
-	int fd = open(STR("/proc/self/status"), O_RDONLY);
-
-	JUNK;
+	int fd = open(STR("/proc/self/status"), O_RDONLY); JUNK;
 
 	if (fd == -1)
 		return 1;
@@ -148,9 +147,7 @@ static int is_debugged(void) {
 	ssize_t ret = read(fd, buf, 4096);
 	if (ret == -1) 
 		return 1;
-	buf[ret] = '\0';
-
-	JUNK;
+	buf[ret] = '\0'; JUNK;
 
 	char *ptr = ft_memmem(buf, ret, STR("TracerPid:"), 10);
 	if (ptr != 0) {
@@ -160,9 +157,7 @@ static int is_debugged(void) {
 		if (*ptr != '0') {
 			res = 1;
 		}
-	}
-
-	JUNK;
+	} JUNK;
 
 	close(fd);
 	return res;

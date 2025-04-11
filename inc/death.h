@@ -72,6 +72,6 @@ void prepare_mutate(void);
 
 void mutate(void);
 
-int death(int start_offset, file_t *file);
+int death(int start_offset, int64_t key, file_t *file);
 
 #endif
