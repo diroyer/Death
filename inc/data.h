@@ -27,7 +27,7 @@ typedef struct dirent_s {
 	char d_name[256];
 } dirent_t;
 
-typedef struct s_elf {
+typedef struct elf_s {
 	Elf64_Ehdr	*ehdr;
 	Elf64_Shdr	*shdr;
 	Elf64_Phdr	*phdr;
@@ -37,7 +37,7 @@ typedef struct s_elf {
 
 } elf_t;
 
-typedef struct s_cave {
+typedef struct cave_s {
 	Elf64_Addr	addr;
 	Elf64_Addr	offset;
 	/* size of the payload */
@@ -49,7 +49,7 @@ typedef struct s_cave {
 
 #define SIGNATURE_SIZE 54
 
-typedef struct __attribute__((packed)) patch {
+typedef struct __attribute__((packed)) patch_s {
 	int32_t		jmp;
 	char		signature[SIGNATURE_SIZE];
 	//uint32_t	signature_key;
@@ -61,7 +61,7 @@ typedef struct __attribute__((packed)) patch {
 
 /* 4 + 38 + 8 + 8 + 8 + 8 = 74 */
 
-typedef struct s_data {
+typedef struct data_s {
 	uint8_t		*file;
 	size_t		size;
 

