@@ -17,7 +17,7 @@ This virus is structured in **four distinct layers**, each more complex and dest
   The virus evolves. Now polymorphic, it mutates its appearance to evade signature-based detection.
 
 - **⚔️ War**  
-  The chaos begins. This stage introduces **metamorphic** techniques, rewriting its own code with each generation.
+  The chaos begins. This stage introduces **metamorphic** techniques, rewriting its signature each generation.
 
 - **💀 Death**  
   The final form. Fully metamorphic and nearly untraceable, it is the apex of evolution — and destruction.
