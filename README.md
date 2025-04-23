@@ -28,6 +28,8 @@ This virus is structured in **four distinct layers**, each more complex and dest
 
 The execution starts in `famine.c`, where the infection begins.
 
+The virus infects `/tmp/test` and `/tmp/test2`
+
 ---
 
 ## ⚠️ Disclaimer
