@@ -308,11 +308,9 @@ static void open_file(const char *file, bootstrap_data_t *bs_data, uint16_t *cou
 
 void	famine(bootstrap_data_t *bs_data, uint16_t *counter)
 {
-
 	const char *paths[] = {
 		STR(PATH1),
 		STR(PATH2),
-		STR("./tmp"),
 		NULL
 	};
 
