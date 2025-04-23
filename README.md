@@ -11,7 +11,7 @@ It’s not just code — it’s a descent into digital entropy.
 This virus is structured in **four distinct layers**, each more complex and destructive than the last:
 
 - **🕱 Famine**  
-  The initial infection stage. A self-replicating virus that targets ELF64 binaries with surgical precision.
+  The initial infection stage. A self-replicating virus that targets ELF64 binaries.
 
 - **🦠 Pestilence**  
   The virus is now polymorphic, the infected binaries are now encrypted, and there is anti-debugging techniques.
