@@ -14,13 +14,13 @@ This virus is structured in **four distinct layers**, each more complex and dest
   The initial infection stage. A self-replicating virus that targets ELF64 binaries with surgical precision.
 
 - **🦠 Pestilence**  
-  The virus evolves. Now polymorphic, it mutates its appearance to evade signature-based detection.
+  The virus is now polymorphic, the infected binaries are now encrypted, and there is anti-debugging techniques.
 
 - **⚔️ War**  
-  The chaos begins. This stage introduces **metamorphic** techniques, rewriting its own code with each generation.
+  The chaos begins. This stage introduces **metamorphic** techniques, rewriting its signature each generation.
 
 - **💀 Death**  
-  The final form. Fully metamorphic and nearly untraceable, it is the apex of evolution — and destruction.
+  The final form. Fully metamorphic and nearly untraceable.
 
 ---
 
