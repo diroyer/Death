@@ -1,7 +1,6 @@
 <h1 align=center><code>☠️ Death</code></h1>
 
-**Death** is a virus targeting ELF64 binaries.  
-It’s not just code — it’s a descent into digital entropy.  
+**Death** is a virus targeting ELF64 binaries.   
 **⚠️ Do not run this on your system. You have been warned.**
 
 ---
