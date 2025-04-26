@@ -9,16 +9,16 @@
 
 This virus is structured in **four distinct layers**, each more complex and destructive than the last:
 
-- ** Famine**  
+- **Famine**  
   The initial infection stage. A self-replicating virus that targets ELF64 binaries.
 
-- ** Pestilence**  
+- **Pestilence**  
   The virus is now polymorphic, the infected binaries are now encrypted, and there is anti-debugging techniques.
 
-- ** War**  
+- **War**  
   The chaos begins. This stage introduces **metamorphic** techniques, rewriting its signature each generation.
 
-- ** Death**  
+- **Death**  
   The final form. Fully metamorphic and nearly untraceable.
 
 ---
