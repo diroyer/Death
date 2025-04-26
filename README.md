@@ -13,10 +13,10 @@ This virus is structured in **four distinct layers**, each more complex and dest
   The initial infection stage. A self-replicating virus that targets ELF64 binaries.
 
 - **Pestilence**  
-  The virus is now polymorphic, the infected binaries are now encrypted, and there is anti-debugging techniques.
+  Polymorphic part, the infected binaries are encrypted and there is anti-debugging techniques.
 
 - **War**  
-  The chaos begins. This stage introduces **metamorphic** techniques, rewriting its signature each generation.
+  This stage introduces **metamorphic** techniques, rewriting its signature each generation.
 
 - **Death**  
   The final form. Fully metamorphic and nearly untraceable.
