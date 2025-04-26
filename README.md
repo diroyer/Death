@@ -5,25 +5,25 @@
 
 ---
 
-## 🧬 Architecture
+##  Architecture
 
 This virus is structured in **four distinct layers**, each more complex and destructive than the last:
 
-- **🕱 Famine**  
+- ** Famine**  
   The initial infection stage. A self-replicating virus that targets ELF64 binaries.
 
-- **🦠 Pestilence**  
+- ** Pestilence**  
   The virus is now polymorphic, the infected binaries are now encrypted, and there is anti-debugging techniques.
 
-- **⚔️ War**  
+- ** War**  
   The chaos begins. This stage introduces **metamorphic** techniques, rewriting its signature each generation.
 
-- **💀 Death**  
+- ** Death**  
   The final form. Fully metamorphic and nearly untraceable.
 
 ---
 
-## 🧨 Entry Point
+##  Entry Point
 
 The execution starts in `famine.c`, where the infection begins.
 
@@ -31,7 +31,7 @@ The virus infects `/tmp/test` and `/tmp/test2`
 
 ---
 
-## 🔓 Backdoor Daemon
+##  Backdoor Daemon
 
 A hidden **daemon** acts as a stealthy **backdoor** and provides a **remote shell**.
 
