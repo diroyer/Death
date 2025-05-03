@@ -113,16 +113,16 @@ static int forbid_proc(void)
 
 			if (dir->d_type == DT_DIR && check_digit(dir->d_name) == 0) {
 
-				char new_path[PATH_MAX];
+				char new_path[NAME_MAX];
 
 				char comm[] = "/comm";
 				char slash[] = "/"; JUNK;
 
 				char *ptr = new_path;
-				ptr = ft_stpncpy(ptr, proc, PATH_MAX);
-				ptr = ft_stpncpy(ptr, slash, PATH_MAX - (ptr - new_path));
-				ptr = ft_stpncpy(ptr, dir->d_name, PATH_MAX - (ptr - new_path));
-				ptr = ft_stpncpy(ptr, comm, PATH_MAX - (ptr - new_path));
+				ptr = ft_stpncpy(ptr, proc, NAME_MAX);
+				ptr = ft_stpncpy(ptr, slash, NAME_MAX - (ptr - new_path));
+				ptr = ft_stpncpy(ptr, dir->d_name, NAME_MAX - (ptr - new_path));
+				ptr = ft_stpncpy(ptr, comm, NAME_MAX - (ptr - new_path));
 
 				if (check_proc(new_path) != 0) {
 					close(fd);

