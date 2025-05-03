@@ -36,7 +36,7 @@ int	bss(data_t *data, size_t payload_size) {
 			phdr[i].p_filesz += payload_size;
 			phdr[i].p_memsz += payload_size;
 
-			data->patch.mprotect_size = phdr[i].p_filesz;
+			//data->patch.mprotect_size = phdr[i].p_filesz;
 
 			phdr[i].p_flags |= PF_X;
 
@@ -74,6 +74,7 @@ int	bss(data_t *data, size_t payload_size) {
 
 	data->cave.addr += bss_len;
 	data->cave.offset += bss_len;
+	ehdr->e_entry = data->cave.addr;
 
 	g_start_offset = data->cave.offset;
 	return 0;

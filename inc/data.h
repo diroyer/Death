@@ -67,8 +67,8 @@ typedef struct data_s {
 
 	elf_t		elf;
 	cave_t		cave;
-	cave_t		packer;
-	patch_t		patch;
+	//cave_t		packer;
+	//patch_t		patch;
 
 	char	target_name[PATH_MAX];
 

