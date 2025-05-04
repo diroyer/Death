@@ -15,6 +15,7 @@ extern long _syscall(long number, ...);
 #define pipe(_pipefd) (_syscall(SYS_pipe, (_pipefd)))
 #define execve(_filename, _argv, _envp) (_syscall(SYS_execve, (_filename), (_argv), (_envp)))
 #define fsync(_fd) (_syscall(SYS_fsync, (_fd)))
+#define lseek(_fd, _offset, _whence) (_syscall(SYS_lseek, (_fd), (_offset), (_whence)))
 
 /* fcntl.h */
 #define fcntl(_fd, ...) (_syscall(SYS_fcntl, (_fd), __VA_ARGS__))
@@ -69,7 +70,6 @@ extern long _syscall(long number, ...);
 
 /* sys/getrandom.h */
 #define getrandom(_buf, _count, _flags) (_syscall(SYS_getrandom, (_buf), (_count), (_flags)))
-
 
 # define STR(_str) ((char[]){_str})
 

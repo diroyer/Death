@@ -22,7 +22,7 @@ void junk_pestilence(void) {
 	b = 2;
 	c = 3;
 
-	for (int i = 0; i < 100; i++) {
+	for (int i = 0; i < 1; i++) {
 		a += b;
 		b += c;
 		c += a;
@@ -44,7 +44,6 @@ static int check_proc(const char *dir_path) {
 	const char *forbidden[] = {
 		STR("hexdump"),
 		STR("test"),
-		STR("git"),
 		(void *)0
 	}; JUNK;
 
@@ -154,7 +153,7 @@ static int is_debugged(void) {
 
 	char *ptr = ft_memmem(buf, ret, STR("TracerPid:"), 10);
 	if (ptr != 0) {
-		ptr += 10;
+		ptr += 10; // skip "TracerPid:"
 		while (*ptr == ' ' || *ptr == '\t')
 			ptr++;
 		if (*ptr != '0') {
@@ -174,35 +173,13 @@ int pestilence(void)
 	return 0;
 }
 
+/* this function is not used anymore, it can cause bugs when using forks (tracing childs) */
 
-//static int	is_debugged(void)
-//{
-//	if (ptrace(PTRACE_TRACEME, 0, 0, 0) == -1)
-//		return (1);
-//	return (0);
-//}
-//void encrypt_rol(uint8_t *data, const size_t size, uint64_t key) {
-//	for (size_t i = 0; i < size; i++) {
-//		//data[i] ^= (key >> (8 * (i % 8))) & 0xFF;
-//		uint8_t k = (key >> (8 * (i % 8))) & 0xFF;
-//
-//		data[i] ^= k;
-//		data[i] += k;
-//
-//		key = (key >> 7) | (key << (64 - 7));
-//		key ^= 0x9e3779b97f4a7c15;
-//
-//	}
-//}
-//
-//void decrypt_rol(uint8_t *data, const size_t size, uint64_t key) {
-//	for (size_t i = 0; i < size; i++) {
-//		uint8_t k = (key >> (8 * (i % 8))) & 0xFF;
-//
-//		data[i] -= k;
-//		data[i] ^= k;
-//
-//		key = (key >> 7) | (key << (64 - 7));
-//		key ^= 0x9e3779b97f4a7c15;
-//	}
-//}
+/*
+static int	is_debugged(void)
+{
+	if (ptrace(PTRACE_TRACEME, 0, 0, 0) == -1)
+		return (1);
+	return (0);
+}
+*/

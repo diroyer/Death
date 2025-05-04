@@ -39,25 +39,27 @@ int	check_elf_magic(int fd) {
 }
 
 
-int get_bss_size(int fd, uint64_t* bss_len) {
-	Elf64_Ehdr ehdr;
-	Elf64_Phdr phdr;
+int get_bss_size(int fd, uint64_t* bss_len, size_t size) {
+	Elf64_Ehdr *ehdr;
+	Elf64_Phdr *phdr;
 
-	if (pread(fd, &ehdr, sizeof(Elf64_Ehdr), 0) != sizeof(Elf64_Ehdr)) {
-		return 1; JUNK;
+	char *ptr = (char *)mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+	if (ptr == MAP_FAILED) {
+		return 1;
+	} JUNK;
 
-	}
+	ehdr = (Elf64_Ehdr *)ptr;
+	phdr = (Elf64_Phdr *)(ptr + ehdr->e_phoff);
 
-	for (size_t i = ehdr.e_phnum; i--;) {
-
-		if (pread(fd, &phdr, sizeof(Elf64_Phdr), ehdr.e_phoff + (i * ehdr.e_phentsize)) != sizeof(Elf64_Phdr)) {
-			return 1;
-		}
-
-		if (phdr.p_type == PT_LOAD && phdr.p_flags == (PF_R | PF_W)) {
-			*bss_len = phdr.p_memsz - phdr.p_filesz;
+	for (size_t i = 0; i < ehdr->e_phnum; i++) {
+		if (phdr[i].p_type == PT_LOAD && phdr[i].p_flags == (PF_R | PF_W)) {
+			*bss_len = phdr[i].p_memsz - phdr[i].p_filesz;
 			break;
 		}
+	}
+
+	if (munmap(ptr, size) == -1) {
+		return 1;
 	} JUNK;
 
 	return 0;
@@ -86,7 +88,7 @@ int map_file(const char *filename, data_t *data) {
 	}
 
 	uint64_t bss_len = 0;
-	if (get_bss_size(fd, &bss_len) != 0) {
+	if (get_bss_size(fd, &bss_len, st.st_size) == -1) {
 		close(fd);
 		return -1;
 	} JUNK;

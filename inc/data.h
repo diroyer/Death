@@ -6,6 +6,7 @@
 # include <stdbool.h>
 # include <linux/limits.h>
 
+#define SIGNATURE_SIZE 54
 #define MAGIC_NUMBER 0x15D2F
 
 typedef struct bootstrap_data_s {
@@ -14,7 +15,7 @@ typedef struct bootstrap_data_s {
 	char **envp;
 } bootstrap_data_t;
 
-typedef struct s_fileview {
+typedef struct fileview_s {
 	uint8_t *data;
 	size_t size;
 } fileview_t;
@@ -47,17 +48,6 @@ typedef struct cave_s {
 	int32_t		rel_jmp;
 } cave_t;
 
-#define SIGNATURE_SIZE 54
-
-typedef struct __attribute__((packed)) patch_s {
-	int32_t		jmp;
-	char		signature[SIGNATURE_SIZE];
-	//uint32_t	signature_key;
-	uint64_t	mprotect_size;
-	uint64_t	decrypt_size;
-	uint64_t	virus_offset;
-	int64_t		key;
-} patch_t;
 
 /* 4 + 38 + 8 + 8 + 8 + 8 = 74 */
 
@@ -67,8 +57,6 @@ typedef struct data_s {
 
 	elf_t		elf;
 	cave_t		cave;
-	//cave_t		packer;
-	//patch_t		patch;
 
 	char	target_name[PATH_MAX];
 

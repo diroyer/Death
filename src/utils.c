@@ -11,6 +11,14 @@ void encrypt(uint8_t *data, const size_t size, int64_t key) {
 	}
 }
 
+void encrypt_offset(uint8_t *data, const size_t size, int64_t key, size_t offset) {
+
+	unsigned char *keyptr = (unsigned char *)&key;
+	for (size_t i = 0; i < size; i++) {
+		data[i] ^= keyptr[(i + offset) % 8];
+	}
+}
+
 void decrypt(uint8_t *data, const size_t size, int64_t key) {
 	for (size_t i = 0; i < size; i++) {
 		data[i] ^= (key >> (8 * (i % 8))) & 0xFF;
@@ -180,6 +188,18 @@ int	ft_strcmp(const char *s1, const char *s2)
 	return *s1 - *s2;
 }
 
+int	ft_strncmp(const char *s1, const char *s2, size_t n)
+{
+	while (n && *s1 && *s2 && *s1 == *s2) {
+		s1++;
+		s2++;
+		n--;
+	}
+	if (n == 0)
+		return 0;
+	return *s1 - *s2;
+}
+
 char * itoa(long x, char *t)
 {
 	int i;
@@ -289,6 +309,27 @@ int _printf(char *fmt, ...)
 		fmt++;
 	}
 	return 1;
+}
+
+char *ft_strchr(const char *s, int c) {
+	while (*s) {
+		if (*s == (char)c) {
+			return (char *)s;
+		}
+		s++;
+	}
+	return NULL;
+}
+
+char *ft_strrchr(const char *s, int c) {
+	const char *last = NULL;
+	while (*s) {
+		if (*s == (char)c) {
+			last = s;
+		}
+		s++;
+	}
+	return (char *)last;
 }
 
 //void *search_signature(data_t *data, const char *key) {

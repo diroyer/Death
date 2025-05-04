@@ -10,6 +10,7 @@ extern char g_signature[SIGNATURE_SIZE];
 extern void _start(void);
 
 static uint64_t fnv1a_64(const void *data, size_t len) {
+
 	uint64_t hash = FNV_OFFSET_BASIS_64;
 	for (size_t i = 0; i < len; i++) {
 		hash ^= ((uint8_t *)data)[i];
@@ -46,7 +47,6 @@ static void hash_with_time(char *fingerprint) {
 	uint64_t ns = tv.tv_sec * 1000000 + tv.tv_usec;
 	uint64_t hash = fnv1a_64(&ns, sizeof(ns));
 	hash_to_printable(hash, fingerprint);
-
 }
 
 static void increment_counter(char *counter) {
