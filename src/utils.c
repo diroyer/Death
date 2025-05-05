@@ -2,20 +2,18 @@
 #include <fcntl.h>
 
 #include "utils.h"
+#include "data.h"
 #include "syscall.h"
 
-
-void encrypt(uint8_t *data, const size_t size, int64_t key) {
+void encrypt(uint8_t *data, const size_t size, uint8_t *key) {
 	for (size_t i = 0; i < size; i++) {
-		data[i] ^= (key >> (8 * (i % 8))) & 0xFF;
+		data[i] ^= key[i % KEY_SIZE];
 	}
 }
 
-void encrypt_offset(uint8_t *data, const size_t size, int64_t key, size_t offset) {
-
-	unsigned char *keyptr = (unsigned char *)&key;
+void encrypt_offset(uint8_t *data, const size_t size, uint8_t *key, size_t offset) {
 	for (size_t i = 0; i < size; i++) {
-		data[i] ^= keyptr[(i + offset) % 8];
+		data[i] ^= key[(i + offset) % KEY_SIZE];
 	}
 }
 
@@ -253,6 +251,13 @@ char * itox(long x, char *t)
 	}
 
 	return t;
+}
+
+void print_key(uint8_t *key, size_t size) {
+	for (size_t i = 0; i < size; i++) {
+		write(1, &key[i], 1);
+	}
+	write(1, STR("\n"), 1);
 }
 
 int _puts(char *str)

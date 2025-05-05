@@ -31,8 +31,9 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /root/docker
 
-COPY . .
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+#COPY . .
 
 # Set Zsh as default shell
 CMD ["zsh"]

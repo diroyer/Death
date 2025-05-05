@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 typedef struct file_s file_t;
 
@@ -74,10 +75,10 @@ enum e_opcode {
 };
 
 
-void prepare_mutate(void);
-
-void mutate(void);
-
-int death(int start_offset, int64_t key, file_t *file);
+void	prepare_mutate(void);
+void	mutate(void);
+int make_writeable(uint8_t *self, size_t size);
+//int	death(int start_offset, int64_t key, file_t *file);
+int	death(int start_offset, uint8_t *key, file_t *file, bool is_encrypted);
 
 #endif

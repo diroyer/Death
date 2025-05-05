@@ -30,6 +30,7 @@ override deps := $(srcs:%.c=%.d)
 
 override cflags := -fpic -nostdlib -I./inc -fcf-protection=none -O0 -std=c17 \
 					-g -fno-jump-tables \
+					-Wno-unused-function \
 					-Wall -Wextra -Werror -Wpedantic
 
 override depflags = -MT $@ -MMD -MF $(src_dir)/$*.d

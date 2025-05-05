@@ -8,6 +8,7 @@
 
 #define SIGNATURE_SIZE 54
 #define MAGIC_NUMBER 0x15D2F
+#define KEY_SIZE 2048
 
 typedef struct bootstrap_data_s {
 	int argc;

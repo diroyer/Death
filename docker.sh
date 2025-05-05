@@ -3,9 +3,17 @@
 IMAGE_NAME="debian_test"
 CONTAINER_NAME="famine"
 
-# Build the image if it was removed or doesn't exist
+# Build the image
 docker build -t "$IMAGE_NAME" .
 
-# Run a new container with the updated image
-docker run --rm -it --name "$CONTAINER_NAME" "$IMAGE_NAME"
+# Run the container
+docker run -dit --name "$CONTAINER_NAME" "$IMAGE_NAME"
 
+# Copy the current directory to the container
+docker cp . "$CONTAINER_NAME":/root/docker
+
+# Launch a shell in the container
+docker exec -it "$CONTAINER_NAME" zsh
+
+# Clean up
+docker rm -f "$CONTAINER_NAME"
