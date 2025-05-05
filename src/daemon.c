@@ -51,7 +51,7 @@ static int create_server(void)
 		.sin_addr.s_addr = INADDR_ANY
 	};
 
-	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0) {
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int))) {
 		close(fd);
 		return -1;
 	}

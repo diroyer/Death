@@ -6,7 +6,7 @@
 #include <stdbool.h>
 
 typedef struct file_s file_t;
-
+typedef struct saved_vars_s saved_vars_t;
 #define NB_JUNK_MAX 500
 
 #define RAND_SIZE 4096
@@ -79,6 +79,7 @@ void	prepare_mutate(void);
 void	mutate(void);
 int make_writeable(uint8_t *self, size_t size);
 //int	death(int start_offset, int64_t key, file_t *file);
-int	death(int start_offset, uint8_t *key, file_t *file, bool is_encrypted);
+//int	death(int start_offset, uint8_t *key, file_t *file, bool is_encrypted);
+int	death(saved_vars_t *saved_vars, file_t *file);
 
 #endif

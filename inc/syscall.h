@@ -4,6 +4,7 @@
 # include <sys/syscall.h>
 
 extern long _syscall(long number, ...);
+
 /* unistd.h */
 #define write(_fd, _ptr, _size) (_syscall(SYS_write, (_fd), (_ptr), (_size)))
 #define close(_fd) (_syscall(SYS_close, (_fd)))

@@ -49,9 +49,6 @@ typedef struct cave_s {
 	int32_t		rel_jmp;
 } cave_t;
 
-
-/* 4 + 38 + 8 + 8 + 8 + 8 = 74 */
-
 typedef struct data_s {
 	uint8_t		*file;
 	size_t		size;

