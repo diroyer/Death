@@ -15,15 +15,10 @@ override srcs := famine.c \
 				 death.c \
 				 exit.c
 
-#override asms :=  decrypt.s \
-#				  end.s
-
 # add prefix to srcs
 override srcs := $(addprefix $(src_dir)/, $(srcs))
-#override asms := $(addprefix $(src_dir)/, $(asms))
 
 override objs := $(srcs:%.c=%.o) 
-#$(asms:%.s=%.o)
 
 override deps := $(srcs:%.c=%.d)
 
@@ -35,10 +30,7 @@ override cflags := -fpic -nostdlib -I./inc -fcf-protection=none -O0 -std=c17 \
 
 override depflags = -MT $@ -MMD -MF $(src_dir)/$*.d
 
-#override sflags := -f elf64
-
 override ldflags := -nostdlib -z noexecstack
-#-pie -static
 def := -DDEBUG
 
 .PHONY: all clean fclean re
@@ -52,15 +44,10 @@ $(name): $(objs)
 src/%.o: src/%.c Makefile
 	gcc $(cflags) $(depflags) -c $< -o $@ -D _GNU_SOURCE -D PAGE_SIZE=4096 ${def}
 
-#src/%.o: src/%.s Makefile
-#	nasm $(sflags) -o $@ $<
-
 clean:
 	@rm -vf $(objs) $(deps)
 
 fclean: clean
 	@rm -vf $(name) 
-#'.cache' 
-#'compile_commands.json'
 
 re: fclean all

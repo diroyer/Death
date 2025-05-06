@@ -1,12 +1,7 @@
 *.o
 *.d
 .cache
-build
-dump
 *.json
-tmp/*
+tmp
 *.swp
-a.out
 Death
-samp
-samp2
