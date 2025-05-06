@@ -7,7 +7,7 @@
 # include <linux/limits.h>
 
 #define SIGNATURE_SIZE 54
-#define MAGIC_NUMBER 0xED0DDCBA
+#define MAGIC_NUMBER 0xE00DDCBA
 
 //#define MAGIC_NUMBER 0x0ED00CDAB
 #define KEY_SIZE 2048
