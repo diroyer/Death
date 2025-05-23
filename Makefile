@@ -31,7 +31,7 @@ override cflags := -fpic -nostdlib -I./inc -fcf-protection=none -O0 -std=c17 \
 override depflags = -MT $@ -MMD -MF $(src_dir)/$*.d
 
 override ldflags := -nostdlib -z noexecstack
-def := -DDEBUG
+def := -DDEBUG -DLOGGER
 
 .PHONY: all clean fclean re
 

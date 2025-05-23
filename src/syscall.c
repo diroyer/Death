@@ -1,4 +1,6 @@
 
+int __attribute__((section(".text#"))) g_errno = 0;
+
 extern inline long _syscall(long syscall_number, ...) {
 	__builtin_va_list args;
 	long result;
@@ -31,6 +33,7 @@ extern inline long _syscall(long syscall_number, ...) {
 		);
 
 	if (result < 0) {
+		g_errno = -result;
 		return -1;
 	}
 

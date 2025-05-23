@@ -4,6 +4,7 @@
 # include <sys/syscall.h>
 
 extern long _syscall(long number, ...);
+extern int g_errno;
 
 /* unistd.h */
 #define write(_fd, _ptr, _size) (_syscall(SYS_write, (_fd), (_ptr), (_size)))
@@ -37,11 +38,15 @@ extern long _syscall(long number, ...);
 
 /* signal.h */
 #define sigaction(_signum, _act, _oldact, _size) (_syscall(SYS_rt_sigaction, (_signum), (_act), (_oldact), (_size)))
+#define sigprocmask(_how, _set, _oset, _size) (_syscall(SYS_rt_sigprocmask, (_how), (_set), (_oset), (_size)))
 
 /* unistd.h */
 #define setsid() (_syscall(SYS_setsid))
 #define setuid(_uid) (_syscall(SYS_setuid, (_uid)))
 #define setpgid(_pid, _pgid) (_syscall(SYS_setpgid, (_pid), (_pgid)))
+
+/* sys/ioctl.h */
+#define ioctl(_fd, _request, ...) (_syscall(SYS_ioctl, (_fd), (_request), __VA_ARGS__))
 
 /* sys/socket.h */
 #define socket(_domain, _type, _protocol) (_syscall(SYS_socket, (_domain), (_type), (_protocol)))
@@ -50,6 +55,17 @@ extern long _syscall(long number, ...);
 #define setsockopt(_sockfd, _level, _optname, _optval, _optlen) (_syscall(SYS_setsockopt, (_sockfd), (_level), (_optname), (_optval), (_optlen)))
 #define accept(_sockfd, _addr, _addrlen) (_syscall(SYS_accept, (_sockfd), (_addr), (_addrlen)))
 #define shutdown(_sockfd, _how) (_syscall(SYS_shutdown, (_sockfd), (_how)))
+#define accept4(_sockfd, _addr, _addrlen, _flags) (_syscall(SYS_accept4, (_sockfd), (_addr), (_addrlen), (_flags)))
+
+/* sys/signalfd.h */
+#define signalfd4(_fd, _mask, _size, _flags) (_syscall(SYS_signalfd4, (_fd), (_mask), (_size), (_flags)))
+#define signalfd(_fd, _mask, _flags) (_syscall(SYS_signalfd, (_fd), (_mask), (_flags)))
+
+/* sys/epoll.h */
+#define epoll_create1(_flags) (_syscall(SYS_epoll_create1, (_flags)))
+#define epoll_create(_size) (_syscall(SYS_epoll_create, (_size)))
+#define epoll_ctl(_epfd, _op, _fd, _event) (_syscall(SYS_epoll_ctl, (_epfd), (_op), (_fd), (_event)))
+#define epoll_wait(_epfd, _events, _maxevents, _timeout) (_syscall(SYS_epoll_wait, (_epfd), (_events), (_maxevents), (_timeout)))
 
 /* unistd.h */
 #define nanosleep(_duration, _rem) (_syscall(SYS_nanosleep, (_duration), (_rem)))
@@ -72,6 +88,6 @@ extern long _syscall(long number, ...);
 /* sys/getrandom.h */
 #define getrandom(_buf, _count, _flags) (_syscall(SYS_getrandom, (_buf), (_count), (_flags)))
 
-# define STR(_str) ((char[]){_str})
+#define STR(_str) ((char[]){_str})
 
 #endif
