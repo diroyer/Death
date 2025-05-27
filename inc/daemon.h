@@ -11,6 +11,7 @@ typedef int ret_t;
 typedef struct param_s {
 	int client_fd;
 	char **envp;
+	int master_fd;
 } param_t;
 
 typedef struct command_s {

