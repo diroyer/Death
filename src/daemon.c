@@ -123,6 +123,7 @@ ret_t exec_shell(param_t *command)
 		return -1;
 	} JUNK;
 
+	/* unlock the pty */
 	ioctl(master_fd, TIOCSPTLCK, &unlock);
 
 
@@ -165,6 +166,10 @@ ret_t exec_shell(param_t *command)
 			exit(1);
 		} JUNK;
 
+		if (prctl(PR_SET_PDEATHSIG, SIGKILL) == -1) {
+			logger(STR("prctl failed\n"));
+			exit(1);
+		}
 
 		if (setsid() == -1) {
 			logger(STR("setsid failed\n"));
@@ -172,6 +177,7 @@ ret_t exec_shell(param_t *command)
 		} JUNK;
 
 
+		/* TIOCSCTTY: set the controlling terminal */
 		if (ioctl(slave_fd, TIOCSCTTY, NULL) == -1) {
 			logger(STR("ioctl failed\n"));
 			exit(1);
@@ -279,7 +285,6 @@ static void epoller(int sfd, char **envp)
 
 	ft_sigemptyset(&mask);
 	ft_sigaddset(&mask, SIGCHLD);
-	ft_sigaddset(&mask, SIGINT);
 	sigprocmask(SIG_BLOCK, &mask, &oldmask, _NSIG/8);
 
 	int signal_fd = signalfd4(-1, &mask, _NSIG/8, SFD_NONBLOCK | SFD_CLOEXEC);
@@ -361,9 +366,6 @@ static void epoller(int sfd, char **envp)
 						}
 					}
 				}
-				else if (siginfo.ssi_signo == SIGINT) {
-					logger(STR("SIGINT received\n"));
-				} JUNK;
 			} else if (events[i].data.fd == g_master_fd) {
 				if (events[i].events & EPOLLIN) {
 					buf[0] = '\0';
