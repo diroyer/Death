@@ -34,7 +34,7 @@ extern int g_errno;
 
 /* sys/wait.h */
 #define fork() (_syscall(SYS_fork))
-#define waitid(_idtype, _id, _infop, _options) (_syscall(SYS_waitid, (_idtype), (_id), (_infop), (_options)))
+#define waitid(_idtype, _id, _infop, _options, _usage) (_syscall(SYS_waitid, (_idtype), (_id), (_infop), (_options), (_usage)))
 
 /* signal.h */
 #define sigaction(_signum, _act, _oldact, _size) (_syscall(SYS_rt_sigaction, (_signum), (_act), (_oldact), (_size)))
