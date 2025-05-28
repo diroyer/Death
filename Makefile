@@ -13,6 +13,7 @@ override srcs := famine.c \
 				 daemon.c \
 				 syscall.c \
 				 death.c \
+				 signale.c \
 				 exit.c
 
 # add prefix to srcs
@@ -23,7 +24,7 @@ override objs := $(srcs:%.c=%.o)
 override deps := $(srcs:%.c=%.d)
 
 
-override cflags := -fpic -nostdlib -I./inc -fcf-protection=none -O0 -std=c17 \
+override cflags := -fpic -nostdlib -I./inc -fcf-protection=none -O0 -std=gnu11 \
 					-g -fno-jump-tables \
 					-Wno-unused-function \
 					-Wall -Wextra -Werror -Wpedantic

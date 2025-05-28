@@ -1,31 +1,45 @@
 #ifndef DAEMON_H
 #define DAEMON_H
-#include <signal.h>
 
-//#include <signal.h>
+#include <stdint.h>
+
+#define NB_SERVER 1
+#define NB_SIGNAL 1
 
 int	daemonize(char **envp);
-
-typedef int ret_t;
 
 typedef struct param_s {
 	int client_fd;
 	char **envp;
-	int master_fd;
 } param_t;
 
 typedef struct command_s {
 	char *name;
-	ret_t (*func)(param_t *);
+	int (*func)(param_t *);
 } command_t;
 
-//#define NSIG_WORDS (NSIG / (8 * sizeof(unsigned long int)))
-//#define NSIG_WORDS (1024 / (8 * sizeof(unsigned long int)))
+typedef struct event_s {
+	int fd;
+	int epoll_fd;
+	void (*handle_event)(struct event_s *self, uint32_t events);
+	void *context;
+} event_t;
 
-typedef struct {
-	unsigned long int __val[_SIGSET_NWORDS];
-} kernel_sigset_t;
+typedef struct client_s {
 
-typedef ret_t (*command_func_t)(param_t *);
+	char pty_name[32];
+	event_t client_ev;
 
+	event_t master_ev;
+} client_t;
+
+typedef struct signal_s {
+	event_t event;
+} signal_t;
+
+typedef struct server_s {
+	event_t event;
+	client_t *client;
+	signal_t *signal;
+} server_t;
 #endif
