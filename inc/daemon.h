@@ -44,4 +44,6 @@ typedef struct command_s {
 	int (*func)(param_t *);
 } command_t;
 
+int add_event(int epoll_fd, event_t *event, uint32_t events);
+int remove_event(int epoll_fd, event_t *event);
 #endif
