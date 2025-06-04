@@ -111,7 +111,13 @@ static int disable_echo(int slave_fd) {
 		return -1;
 	} JUNK;
 
-	tty.c_lflag &= ~ECHO;
+	//tty.c_lflag &= ~ECHO;
+	// cfmakeraw disables ICANON, ECHO, ISIG, etc, disables input/output processing
+	tty.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+	tty.c_oflag &= ~(OPOST);
+	tty.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+	tty.c_cflag &= ~(CSIZE | PARENB);
+	tty.c_cflag |= CS8;
 
 	return ioctl(slave_fd, TCSETS, &tty);
 }
