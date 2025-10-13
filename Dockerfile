@@ -19,21 +19,18 @@ RUN apt-get update && apt-get install -y \
 	rlwrap \
     && apt-get clean 
 
-# Create working directory
-
-# Install Oh My Zsh
-
-#RUN useradd -ms /bin/bash docker
-#
-#USER docker
-#
-#WORKDIR /home/docker
-
 WORKDIR /root/docker
 
-RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+RUN if [ ! -d "/root/.oh-my-zsh" ]; then \
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"; \
+    else \
+        echo "Oh My Zsh is already installed, skipping installation."; \
+    fi
 
-#COPY . .
+
+COPY src/ /root/docker/src
+COPY inc/ /root/docker/inc
+COPY Makefile /root/docker/Makefile
 
 # Set Zsh as default shell
 CMD ["zsh"]
