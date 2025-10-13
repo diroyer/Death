@@ -3,7 +3,7 @@
 
 //#include <signal.h>
 
-int	daemonize(char **envp);
+//int	daemonize(char **envp);
 
 typedef int ret_t;
 
@@ -19,6 +19,8 @@ typedef struct command_s {
 
 
 typedef ret_t (*command_func_t)(param_t *);
+
+void logger(const char *msg);
 
 
 #endif

