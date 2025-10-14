@@ -38,7 +38,6 @@ int	check_elf_magic(int fd) {
 	return 0;
 }
 
-
 int get_bss_size(int fd, uint64_t* bss_len, size_t size) {
 	Elf64_Ehdr *ehdr;
 	Elf64_Phdr *phdr;

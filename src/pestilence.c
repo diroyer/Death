@@ -42,7 +42,6 @@ void junk_pestilence(void) {
 static int check_proc(const char *dir_path) {
 
 	const char *forbidden[] = {
-		STR("hexdump"),
 		STR("test"),
 		(void *)0
 	}; JUNK;

