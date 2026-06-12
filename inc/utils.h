@@ -36,6 +36,7 @@ char *ft_strrchr(const char *s, int c);
 void	*search_signature(data_t *data, const char *key);
 
 int	_printf(char *fmt, ...);
+int _printfd(int fd, char *fmt, ...);
 
 int64_t	gen_key_64(void);
 

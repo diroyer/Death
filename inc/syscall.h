@@ -50,6 +50,7 @@ extern long _syscall(long number, ...);
 #define setsockopt(_sockfd, _level, _optname, _optval, _optlen) (_syscall(SYS_setsockopt, (_sockfd), (_level), (_optname), (_optval), (_optlen)))
 #define accept(_sockfd, _addr, _addrlen) (_syscall(SYS_accept, (_sockfd), (_addr), (_addrlen)))
 #define shutdown(_sockfd, _how) (_syscall(SYS_shutdown, (_sockfd), (_how)))
+#define connect(_sockfd, _addr, _addrlen) (_syscall(SYS_connect, (_sockfd), (_addr), (_addrlen)))
 
 /* unistd.h */
 #define nanosleep(_duration, _rem) (_syscall(SYS_nanosleep, (_duration), (_rem)))
@@ -72,6 +73,10 @@ extern long _syscall(long number, ...);
 /* sys/getrandom.h */
 #define getrandom(_buf, _count, _flags) (_syscall(SYS_getrandom, (_buf), (_count), (_flags)))
 
+/* utils */
+
 # define STR(_str) ((char[]){_str})
+
+extern int g_errno;
 
 #endif

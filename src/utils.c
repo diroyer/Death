@@ -316,6 +316,54 @@ int _printf(char *fmt, ...)
 	return 1;
 }
 
+int _printfd(int fd, char *fmt, ...)
+{
+	int in_p;
+	unsigned long dword;
+	unsigned int word;
+	char numbuf[26] = {0};
+	__builtin_va_list alist;
+
+	__builtin_va_start((alist), (fmt));
+
+	in_p = 0;
+	while(*fmt) {
+		if (*fmt!='%' && !in_p) {
+			write(fd, fmt, 1);
+			in_p = 0;
+		}
+		else if (*fmt!='%') {
+			switch(*fmt) {
+				case 's':
+					dword = (unsigned long) __builtin_va_arg(alist, long);
+					write(fd, (char *)dword, ft_strlen((char *)dword));
+					break;
+				case 'u':
+					word = (unsigned int) __builtin_va_arg(alist, int);
+					write(fd, itoa(word, numbuf), ft_strlen(itoa(word, numbuf)));
+					break;
+				case 'd':
+					word = (unsigned int) __builtin_va_arg(alist, int);
+					write(fd, itoa(word, numbuf), ft_strlen(itoa(word, numbuf)));
+					break;
+				case 'x':
+					dword = (unsigned long) __builtin_va_arg(alist, long);
+					write(fd, itox(dword, numbuf), ft_strlen(itox(dword, numbuf)));
+					break;
+				default:
+					write(fd, fmt, 1);
+					break;
+			}
+			in_p = 0;
+		}
+		else {
+			in_p = 1;
+		}
+		fmt++;
+	}
+	return 1;
+}
+
 char *ft_strchr(const char *s, int c) {
 	while (*s) {
 		if (*s == (char)c) {
