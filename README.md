@@ -43,6 +43,16 @@ This turns an infected system into a fully controlled machine, without the user'
 
 ---
 
+## Build environment
+
+The program was compiled and tested with:
+
+- GCC 12.2.0 (`Debian 12.2.0-14+deb12u1`)
+- Debian 12
+- x86_64
+
+---
+
 ## ⚠️ Disclaimer
 
 This project is **for educational purposes only**.  
