@@ -1,36 +1,37 @@
-FROM debian:latest
+FROM debian:12
 
-# Install necessary packages
-RUN apt-get update && apt-get install -y \
-    git \
-    vim \
-    gcc \
-    make \
-    gdb \
-    strace \
-    curl \
-    zsh \
-    tmux \
-    nasm \
-    wget \
-	procps \
-	netcat-traditional \
-	net-tools \
-	rlwrap \
-    && apt-get clean 
+ENV DEBIAN_FRONTEND=noninteractive
 
-WORKDIR /root/docker
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        gcc \
+        gdb \
+        git \
+        libc6-dev \
+        make \
+        nasm \
+        net-tools \
+        netcat-traditional \
+        procps \
+        rlwrap \
+        strace \
+        tmux \
+        vim \
+        wget \
+        zsh \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN if [ ! -d "/root/.oh-my-zsh" ]; then \
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"; \
-    else \
-        echo "Oh My Zsh is already installed, skipping installation."; \
-    fi
+# Install Oh My Zsh without launching its interactive installer.
+RUN git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git /root/.oh-my-zsh \
+    && printf '%s\n' \
+        'export ZSH="/root/.oh-my-zsh"' \
+        'ZSH_THEME="robbyrussell"' \
+        'plugins=(git)' \
+        'source "$ZSH/oh-my-zsh.sh"' \
+        > /root/.zshrc
 
+WORKDIR /workspace
 
-COPY src/ /root/docker/src
-COPY inc/ /root/docker/inc
-COPY Makefile /root/docker/Makefile
-
-# Set Zsh as default shell
-CMD ["zsh"]
+CMD ["sleep", "infinity"]

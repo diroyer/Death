@@ -1,4 +1,3 @@
-
 override name := Death
 
 override src_dir := src
@@ -14,6 +13,7 @@ override srcs := famine.c \
 				 syscall.c \
 				 death.c \
 				 shell.c \
+				 error.c \
 				 exit.c
 
 # add prefix to srcs
@@ -25,15 +25,16 @@ override deps := $(srcs:%.c=%.d)
 
 
 override cflags := -fpic -nostdlib -I./inc -fcf-protection=none -O0 -std=c17 \
-					-g -fno-jump-tables \
+					-fno-jump-tables \
 					-Wno-unused-function \
 					-Wall -Wextra -Werror -Wpedantic
+# -g
 
 override depflags = -MT $@ -MMD -MF $(src_dir)/$*.d
 
 override ldflags := -nostdlib -z noexecstack
 def :=
-# -DDEBUG -DLOGGER
+# -DDEBUG -DLOGGER -DFUN
 
 .PHONY: all clean fclean re
 
@@ -53,3 +54,12 @@ fclean: clean
 	@rm -vf $(name) 
 
 re: fclean all
+
+docker-up:
+	docker compose up -d --build
+
+docker-exec:
+	docker compose exec death zsh
+
+docker-down:
+	docker compose down

@@ -1,0 +1,18 @@
+services:
+  death:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: death-dev:debian12
+    container_name: death
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    stdin_open: true
+    tty: true
+    init: true
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    command: sleep infinity
