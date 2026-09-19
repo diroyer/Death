@@ -11,7 +11,7 @@
 
 ## Demo
 
-▶️ [Watch the demo](assets/demo.mp4)
+https://github.com/user-attachments/assets/37402bdf-b1fa-408e-942a-e1d0c39b3716
 
 ---
 
