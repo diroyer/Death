@@ -309,7 +309,14 @@ void	entrypoint(int argc, char **argv, char **envp)
 {
 
 #ifdef FUN
-	char msg[] = "\033[31mLove from diroyer <3\033[0m\n";
+	char msg[] =
+		"\033[38;5;196mLove "
+		"\033[38;5;203mfrom "
+		"\033[38;5;199mdiroyer "
+		"\033[38;5;198m<"
+		"\033[38;5;198m3"
+		"\033[0m\n";
+
 	write(1, msg, sizeof(msg) - 1);
 #endif
 

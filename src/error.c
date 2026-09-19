@@ -153,4 +153,8 @@ const char *strerror(int err)
     return g_errno_str[err];
 }
 
+#else
+
+typedef int error_c_nonempty_translation_unit;
+
 #endif

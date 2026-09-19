@@ -1,11 +1,17 @@
 <p align="center">
-  <img src="assets/images/deathfrompuss.jpg" alt="Death from Puss in Boots" width="500">
+  <img src="assets/images/the-young-girl-and-death.webp" alt="The Young Girl and Death by Marianne Stokes" width="500">
 </p>
 
 <h1 align="center"><code>Death</code></h1>
 
 **Death** is a virus targeting ELF64 binaries.   
 **⚠️ Do not run this on your system. You have been warned.**
+
+---
+
+## Demo
+
+▶️ [Watch the demo](assets/demo.mp4)
 
 ---
 
