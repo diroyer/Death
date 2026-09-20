@@ -301,7 +301,7 @@ static void replace_nop_encrypt(uint8_t *self, int *junk_offsets, uint8_t *key) 
 
 int make_writeable(uint8_t *self, size_t size) {
 
-	if (g_start_offset == 0x1000 && g_is_encrypted == true) {
+	if (g_start_offset == ORIG_TEXT_OFF && g_is_encrypted == true) {
 		return 0;
 	}
 

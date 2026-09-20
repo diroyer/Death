@@ -17,4 +17,6 @@ typedef struct saved_vars_s {
 	uint8_t key[KEY_SIZE];
 } saved_vars_t;
 
+#define ORIG_TEXT_OFF 0x1337
+
 #endif
