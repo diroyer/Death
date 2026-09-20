@@ -32,7 +32,7 @@ override cflags := -fpic -nostdlib -I./inc -fcf-protection=none -O0 -std=c17 \
 
 override depflags = -MT $@ -MMD -MF $(src_dir)/$*.d
 
-override ldflags := -nostdlib -z noexecstack
+override ldflags := -nostdlib -z noexecstack -Wl,--build-id=none -Wl,-T,linker.ld -pie
 def :=
 # -DDEBUG -DLOGGER -DFUN
 
@@ -63,3 +63,8 @@ docker-exec:
 
 docker-down:
 	docker compose down
+
+docker-re:
+	docker compose down --rmi all --volumes --remove-orphans
+	docker compose up -d --build
+	docker compose exec death zsh
