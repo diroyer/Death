@@ -11,13 +11,10 @@
 
 ## Demo
 
-<p align="center">
-  <a href="https://youtu.be/xseXfWnuNB8">
-    <img src="https://img.youtube.com/vi/xseXfWnuNB8/maxresdefault.jpg"
-         alt="Death - Demo"
-         width="800">
-  </a>
-</p>
+
+
+https://github.com/user-attachments/assets/e0023db3-6e32-4aa1-b859-1b230ef62dbe
+
 
 
 ---
