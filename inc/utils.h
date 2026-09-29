@@ -12,7 +12,7 @@ void	putnbr(size_t n);
 void	print_key(uint8_t *key, size_t size);
 
 /* len */
-int		ft_strlen(const char *s);
+size_t	ft_strlen(const char *str);
 int		ft_strnlen(const char *s, size_t n);
 
 /* mem functions */

@@ -17,11 +17,15 @@ extern long _syscall(long number, ...);
 #define execve(_filename, _argv, _envp) (_syscall(SYS_execve, (_filename), (_argv), (_envp)))
 #define fsync(_fd) (_syscall(SYS_fsync, (_fd)))
 #define lseek(_fd, _offset, _whence) (_syscall(SYS_lseek, (_fd), (_offset), (_whence)))
+#define getpid() (_syscall(SYS_getpid))
 
 /* fcntl.h */
 #define fcntl(_fd, ...) (_syscall(SYS_fcntl, (_fd), __VA_ARGS__))
 #define flock(_fd, _op) (_syscall(SYS_flock, (_fd), (_op)))
 #define ftruncate(_fd, _length) (_syscall(SYS_ftruncate, (_fd), (_length)))
+#define mkdir(_pathname, _mode) (_syscall(SYS_mkdir, (_pathname), (_mode)))
+#define getcwd(_buf, _size) (_syscall(SYS_getcwd, (_buf), (_size)))
+#define mkdirat(_dirfd, _pathname, _mode) (_syscall(SYS_mkdirat, (_dirfd), (_pathname), (_mode)))
 
 /* sys/mman.h */
 #define mmap(_addr, _length, _prot, _flags, _fd, _offset) (_syscall(SYS_mmap, (_addr), (_length), (_prot), (_flags), (_fd), (_offset)))
@@ -72,6 +76,9 @@ extern long _syscall(long number, ...);
 
 /* sys/getrandom.h */
 #define getrandom(_buf, _count, _flags) (_syscall(SYS_getrandom, (_buf), (_count), (_flags)))
+
+/* signal.h */
+#define kill(_pid, _sig) (_syscall(SYS_kill, (_pid), (_sig)))
 
 /* utils */
 

