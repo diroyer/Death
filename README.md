@@ -142,6 +142,20 @@ never run the executable directly on the host.
 
 ---
 
+## TODO
+
+- [ ] Implement the disinfectant feature
+
+---
+
+## References
+
+- [ELF file format](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format)
+- Learning Linux Binary Analysis by Ryan O'Neill
+- The Art of Computer Virus Research and Defense by Peter Szor
+
+---
+
 ## ⚠️ Disclaimer
 
 This project is **for educational purposes only**.  
