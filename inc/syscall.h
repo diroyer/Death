@@ -77,6 +77,4 @@ extern long _syscall(long number, ...);
 
 # define STR(_str) ((char[]){_str})
 
-extern int g_errno;
-
 #endif
