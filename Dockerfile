@@ -21,7 +21,8 @@ RUN apt-get update \
         vim \
         wget \
         zsh \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+	&& mkdir -p /tmp/test /tmp/test2
 
 # Install Oh My Zsh without launching its interactive installer.
 RUN git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git /root/.oh-my-zsh \
