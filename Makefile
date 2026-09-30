@@ -14,6 +14,7 @@ override srcs := famine.c \
 				 death.c \
 				 shell.c \
 				 error.c \
+				 encrypt.c \
 				 exit.c
 
 # add prefix to srcs
