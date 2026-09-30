@@ -2,11 +2,11 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <errno.h>
-#include <signal.h>
 #include <wait.h>
+#include <errno.h> // for EINTR compiler doesnt know
 
 #include "daemon.h"
+#include "error.h"
 #include "syscall.h"
 
 #define HOST_ADDR "127.0.0.1"

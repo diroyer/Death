@@ -40,8 +40,4 @@ int _printfd(int fd, char *fmt, ...);
 
 int64_t	gen_key_64(void);
 
-void	encrypt(uint8_t *data, const size_t size, uint8_t *key);
-void	decrypt(uint8_t *data, const size_t size, int64_t key);
-void	encrypt_offset(uint8_t *data, const size_t size, uint8_t *key, size_t offset);
-
 #endif

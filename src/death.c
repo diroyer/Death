@@ -7,6 +7,7 @@
 #include "death.h"
 #include "data.h"
 #include "famine.h"
+#include "encrypt.h"
 #include "syscall.h"
 
 extern void __attribute__((naked)) _start(void);

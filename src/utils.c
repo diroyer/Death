@@ -2,49 +2,6 @@
 #include <fcntl.h>
 
 #include "utils.h"
-#include "data.h"
-#include "syscall.h"
-
-void encrypt(uint8_t *data, const size_t size, uint8_t *key) {
-	for (size_t i = 0; i < size; i++) {
-		data[i] ^= key[i % KEY_SIZE];
-	}
-}
-
-void encrypt_offset(uint8_t *data, const size_t size, uint8_t *key, size_t offset) {
-	for (size_t i = 0; i < size; i++) {
-		data[i] ^= key[(i + offset) % KEY_SIZE];
-	}
-}
-
-void decrypt(uint8_t *data, const size_t size, int64_t key) {
-	for (size_t i = 0; i < size; i++) {
-		data[i] ^= (key >> (8 * (i % 8))) & 0xFF;
-	}
-}
-
-int64_t gen_key_64(void) {
-
-	int64_t key = DEFAULT_KEY;
-
-	char urandom[] = "/dev/urandom";
-
-	const int fd = open(urandom, O_RDONLY, 0);
-
-	if (fd == -1) {
-		return key;
-	}
-
-	if (read(fd, &key, sizeof(int64_t)) == -1) {
-		close(fd);
-		return key;
-	}
-
-
-	close(fd);
-	return key;
-}
-
 #ifdef DEBUG
 
 void putnbr_impl(size_t n) {
@@ -253,6 +210,8 @@ char * itox(long x, char *t)
 	return t;
 }
 
+#ifdef DEBUG
+
 void print_key(uint8_t *key, size_t size) {
 	for (size_t i = 0; i < size; i++) {
 		write(1, &key[i], 1);
@@ -364,6 +323,8 @@ int _printfd(int fd, char *fmt, ...)
 	return 1;
 }
 
+#endif
+
 char *ft_strchr(const char *s, int c) {
 	while (*s) {
 		if (*s == (char)c) {
@@ -452,3 +413,29 @@ char *ft_strrchr(const char *s, int c) {
 //	}
 //	return NULL;
 //}
+//
+//#include "syscall.h"
+
+
+//int64_t gen_key_64(void) {
+//
+//	int64_t key = DEFAULT_KEY;
+//
+//	char urandom[] = "/dev/urandom";
+//
+//	const int fd = open(urandom, O_RDONLY, 0);
+//
+//	if (fd == -1) {
+//		return key;
+//	}
+//
+//	if (read(fd, &key, sizeof(int64_t)) == -1) {
+//		close(fd);
+//		return key;
+//	}
+//
+//
+//	close(fd);
+//	return key;
+//}
+

