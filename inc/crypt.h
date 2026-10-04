@@ -1,16 +1,16 @@
-#ifndef ENCRYPT_H
-#define ENCRYPT_H
+#ifndef CRYPT_H
+#define CRYPT_H
+
+#include "xor_crypt.h"
 
 #include "data.h"
 
 #include <stdint.h>
 #include <stddef.h>
 
-void	encrypt(uint8_t *data, const size_t size, uint8_t *key);
-void	decrypt(uint8_t *data, const size_t size, uint8_t *key);
-void	encrypt_offset(uint8_t *data, const size_t size, uint8_t *key, size_t offset);
+extern bool g_is_encrypted;
 
-//int main_encrypt(data_t *data);
+int crypt(data_t *data);
 
 typedef enum algo_e
 {

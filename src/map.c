@@ -70,6 +70,9 @@ int get_bss_size(int fd, uint64_t* bss_len, size_t size) {
 
 int prepare_disinfection(const char *filename, struct stat st, int fd) {
 
+	//idk what i was thinking but we dont need 2 mmaps...
+	//we dont need fd either
+
 	mkdirat(AT_FDCWD, g_old_bins_path, 0755);
 
 	char old_bin_path[PATH_MAX];

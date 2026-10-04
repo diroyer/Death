@@ -6,6 +6,7 @@
 #include "bss.h"
 #include "death.h"
 #include "data.h"
+#include "main.h"
 #include "syscall.h"
 
 extern int g_start_offset;

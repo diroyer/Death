@@ -23,4 +23,7 @@ typedef ret_t (*command_func_t)(param_t *);
 void logger(const char *msg);
 void logger_num(int num);
 
+int	run_daemon(void);
+
+
 #endif

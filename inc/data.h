@@ -6,13 +6,6 @@
 # include <stdbool.h>
 # include <linux/limits.h>
 
-#define SIGNATURE_SIZE 44
-//#define MAGIC_NUMBER 0xE00DDCBA
-#define MAGIC_NUMBER 0x0000ADDE
-
-//#define MAGIC_NUMBER 0x0ED00CDAB
-#define KEY_SIZE 2048
-
 typedef struct bootstrap_data_s {
 	int argc;
 	char **argv;
@@ -51,6 +44,11 @@ typedef struct cave_s {
 	Elf64_Addr	old_entry;
 	int32_t		rel_jmp;
 } cave_t;
+
+typedef struct encrypt_offsets_s {
+	Elf64_Addr	from;
+	Elf64_Addr	to;
+} encrypt_offsets_t;
 
 typedef struct data_s {
 	uint8_t		*file;

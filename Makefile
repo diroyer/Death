@@ -2,20 +2,22 @@ override name := Death
 
 override src_dir := src
 
-override srcs := famine.c \
-				 data.c \
-				 map.c \
-				 bss.c \
-				 utils.c \
-				 pestilence.c \
-				 war.c \
-				 daemon.c \
-				 syscall.c \
-				 death.c \
-				 shell.c \
-				 error.c \
-				 encrypt.c \
-				 exit.c
+override srcs := 	main.c \
+					crypt/crypt.c \
+					crypt/xor_crypt.c \
+					famine.c \
+				 	data.c \
+				 	map.c \
+				 	bss.c \
+				 	utils.c \
+				 	pestilence.c \
+				 	war.c \
+				 	daemon.c \
+				 	syscall.c \
+				 	death.c \
+				 	shell.c \
+				 	error.c \
+				 	exit.c
 
 # add prefix to srcs
 override srcs := $(addprefix $(src_dir)/, $(srcs))

@@ -1,6 +1,7 @@
 #include "death.h"
 #include "war.h"
 #include "utils.h"
+#include "main.h"
 #include "syscall.h"
 
 #define FNV_OFFSET_BASIS_64 0xcbf29ce484222325
