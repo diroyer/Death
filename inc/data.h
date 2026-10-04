@@ -62,7 +62,6 @@ typedef struct data_s {
 	char	target_name[PATH_MAX];
 
 	bootstrap_data_t	*bs_data;
-
 } data_t;
 
 typedef struct file_s {

