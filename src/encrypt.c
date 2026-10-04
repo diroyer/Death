@@ -19,3 +19,20 @@ void decrypt(uint8_t *data, const size_t size, uint8_t *key) {
 		data[i] ^= key[i % KEY_SIZE];
 	}
 }
+
+void xor_encrypt(const crypt_params_t *params) {
+	const xor_params_t *xor_params = &params->params.xor_params;
+	for (size_t i = 0; i < params->size; i++) {
+		xor_params->key[i] ^= xor_params->key[i % KEY_SIZE];
+	}
+}
+
+t_encrypt_func get_encrypt_func(algo_t algo) {
+	switch (algo) {
+		case XOR:
+			return xor_encrypt;
+		default:
+			return NULL;
+	}
+}
+
