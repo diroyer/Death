@@ -32,6 +32,9 @@ void	entrypoint(int argc, char **argv, char **envp);
 //}
 __attribute__((noreturn))
 void _start(void) {
+	__asm__ __volatile__ (
+		"push %rdx\n"
+		);
 	long rbp = (long)__builtin_frame_address(0); JUNK;
 	long argc = *(long *)(rbp + 8); JUNK;
 	char **argv = (char **)(rbp + 16); JUNK;
@@ -40,6 +43,10 @@ void _start(void) {
 	decrypt_self();
 	entrypoint((int)argc, argv, envp);
 
+	__asm__ __volatile__ (
+		"pop %rdx\n"
+		"leave\n"
+		);
 	__builtin_unreachable();
 }
 

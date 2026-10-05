@@ -32,6 +32,7 @@ override cflags := -fpic -nostdlib -I./inc -fcf-protection=none -O0 -std=c17 \
 					-Wno-unused-function \
 					-Wall -Wextra -Werror -Wpedantic
 # -g
+#-fomit-frame-pointer \
 
 override depflags = -MT $@ -MMD -MF $(src_dir)/$*.d
 
