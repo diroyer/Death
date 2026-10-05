@@ -145,6 +145,8 @@ static int check_forbidden(const char *name) {
 	const char *forbidden[] = {
 		STR(".so"),
 		STR("cp"),
+		STR("apt"),
+		STR("dpkg"),
 		NULL
 	};
 
