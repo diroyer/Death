@@ -19,6 +19,7 @@ extern char	    g_signature[SIGNATURE_SIZE];
 extern uint8_t	g_key[KEY_SIZE];
 extern int	    g_start_offset;
 extern char	    **g_envp;
+extern bool	    g_is_self_decrypted;
 
 
 extern void	real_end(void);

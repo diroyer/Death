@@ -2,27 +2,51 @@
 
 #include "main.h"
 #include "crypt.h"
+#include "death.h"
 #include "syscall.h"
 
-void __attribute__((naked, section(".text.start#"))) _start(void)
-{
+
+void decrypt_self(void);
+void	entrypoint(int argc, char **argv, char **envp);
+
+//void __attribute__((naked, section(".text.start#"))) _start(void)
+//{
+//	__asm__ __volatile__ (
+//			"push %rdx\n"
+//			"movq 8(%rsp), %rdi\n"
+//			"leaq 16(%rsp), %rsi\n"
+//			"leaq 8(%rsi,%rdi,8), %rdx\n"
+//			"push %rdi\n"
+//			"push %rsi\n"
+//			"push %rdx\n"
+//			"call decrypt_self\n"
+//			"pop %rdx\n"
+//			"pop %rsi\n"
+//			"pop %rdi\n"
+//			"call entrypoint\n"
+//			"pop %rdx\n"
+//			".global jmp_end\n"
+//			"jmp_end:\n"
+//			"jmp real_end\n"
+//	);
+//}
+__attribute__((noreturn))
+void _start(void) {
+	long rbp = (long)__builtin_frame_address(0); JUNK;
+	long argc = *(long *)(rbp + 8); JUNK;
+	char **argv = (char **)(rbp + 16); JUNK;
+	char **envp = argv + argc + 1; JUNK;
+
+	decrypt_self();
+	entrypoint((int)argc, argv, envp);
+
+	__builtin_unreachable();
+}
+
+__attribute__((noreturn))
+void __attribute__((naked)) jmp_end(void) {
 	__asm__ __volatile__ (
-			"push %rdx\n"
-			"movq 8(%rsp), %rdi\n"
-			"leaq 16(%rsp), %rsi\n"
-			"leaq 8(%rsi,%rdi,8), %rdx\n"
-			"push %rdi\n"
-			"push %rsi\n"
-			"push %rdx\n"
-			"call decrypt_self\n"
-			"pop %rdx\n"
-			"pop %rsi\n"
-			"pop %rdi\n"
-			"call entrypoint\n"
-			"pop %rdx\n"
-			".global jmp_end\n"
-			"jmp_end:\n"
-			"jmp real_end\n"
+		"jmp real_end\n"
 	);
 }
 
@@ -34,6 +58,23 @@ bool __attribute__((section(".text#")))	    g_is_encrypted = false;
 
 int __attribute__((section(".text#")))	    g_start_offset = ORIG_TEXT_OFF;
 char __attribute__((section(".text#")))	    **g_envp;
+
+void junk_main(void) {
+	char c = 'A';
+	char *pc = &c;
+	char **ppc = &pc;
+	char ***pppc = &ppc;
+	char *weird = *(char **)(*(char ***) &pppc);
+	int result = *(int *)&weird * *(int *)&weird;
+	for (int i = 0; i < 100; i++) {
+		result += *(int *)&weird;
+		if (result > 0) {
+			result = *(int *)&weird;
+		} else if (result < 0) {
+			result = *(int *)&weird;
+		}
+	}
+}
 
 void decrypt_self(void)
 {
