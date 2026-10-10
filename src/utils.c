@@ -1,9 +1,9 @@
-#include <string.h>
 #include <fcntl.h>
 #include <signal.h>
 
 #include "syscall.h"
 #include "utils.h"
+
 #ifdef DEBUG
 
 void putnbr_impl(size_t n) {
@@ -30,13 +30,10 @@ void print_env(char **envp)
 
 #endif
 
-//int	ft_strlen(const char *s)
-//{
-//	int i = 0;
-//	while (s[i])
-//		i++;
-//	return (i);
-//}
+void __attribute__((noreturn)) abort(void) {
+	kill(getpid(), SIGKILL);
+	__builtin_unreachable();
+}
 
 size_t ft_strlen (const char *str) {
   const char *char_ptr;

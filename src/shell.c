@@ -3,7 +3,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <wait.h>
-#include <errno.h> // for EINTR compiler doesnt know
 
 #include "daemon.h"
 #include "error.h"

@@ -20,7 +20,7 @@ extern uint8_t	g_key[KEY_SIZE];
 extern int	    g_start_offset;
 extern char	    **g_envp;
 extern bool	    g_is_self_decrypted;
-
+extern uint32_t g_payload_size;
 
 extern void	real_end(void);
 extern void	real_start(void);

@@ -40,6 +40,7 @@ typedef struct cave_s {
 	Elf64_Addr	offset;
 	/* size of the payload */
 	size_t		p_size;
+	size_t		v_size;
 
 	Elf64_Addr	old_entry;
 	int32_t		rel_jmp;

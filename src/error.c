@@ -148,7 +148,7 @@ const char *strerror(int err)
         err = -err;
 
     if (err >= ERRNO_COUNT || g_errno_str[err][0] == '\0')
-        return "Unknown error";
+        return (char[]){"Unknown error"};
 
     return g_errno_str[err];
 }

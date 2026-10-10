@@ -34,6 +34,8 @@ extern long _syscall(long number, ...);
 
 /* sys/stat.h */
 #define fstat(_fd, _statbuf) (_syscall(SYS_fstat, (_fd), (_statbuf)))
+#define utimensat(_dirfd, _pathname, _times, _flags) (_syscall(SYS_utimensat, (_dirfd), (_pathname), (_times), (_flags)))
+#define futimesat(_fd, _pathname, _times) (_syscall(SYS_futimesat, (_fd), (_pathname), (_times)))
 
 /* sys/wait.h */
 #define fork() (_syscall(SYS_fork))

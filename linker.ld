@@ -20,6 +20,9 @@ SECTIONS
     .text TEXT_BASE : SUBALIGN(1)
     {
         KEEP(*(.text.start))
+		*(.text.vars)
+		g_payload_size = .;
+		LONG(real_end - real_start);
         *(.text)
         *(.text.*)
     } :text

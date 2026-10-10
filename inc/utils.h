@@ -40,4 +40,6 @@ int _printfd(int fd, char *fmt, ...);
 
 int64_t	gen_key_64(void);
 
+void	abort(void) __attribute__((noreturn));
+
 #endif

