@@ -10,6 +10,7 @@ typedef struct data_s data_t;
 /* print */
 void	putnbr(size_t n);
 void	print_key(uint8_t *key, size_t size);
+void	print_hex(const uint8_t *data, size_t size);
 
 /* len */
 size_t	ft_strlen(const char *str);

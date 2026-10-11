@@ -3,10 +3,10 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #define SIGNATURE_SIZE 44
 #define MAGIC_NUMBER 0x0000ADDE
-#define KEY_SIZE 2048
 #define ORIG_TEXT_OFF 0x1337
 
 
@@ -16,11 +16,10 @@
 
 
 extern char	    g_signature[SIGNATURE_SIZE];
-extern uint8_t	g_key[KEY_SIZE];
 extern int	    g_start_offset;
 extern char	    **g_envp;
 extern bool	    g_is_self_decrypted;
-extern uint32_t g_payload_size;
+extern size_t	g_payload_size;
 
 extern void	real_end(void);
 extern void	real_start(void);

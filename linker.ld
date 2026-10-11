@@ -22,7 +22,7 @@ SECTIONS
         KEEP(*(.text.start))
 		*(.text.vars)
 		g_payload_size = .;
-		LONG(real_end - real_start);
+		QUAD(real_end - real_start);
         *(.text)
         *(.text.*)
     } :text

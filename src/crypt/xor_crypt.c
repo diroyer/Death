@@ -1,5 +1,5 @@
-#include "data.h"
 #include "crypt.h"
+#include "xor_crypt.h"
 #include "syscall.h"
 
 int xor_params_init(crypt_params_t *params) {
