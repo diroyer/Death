@@ -102,6 +102,8 @@ int prepare_disinfection(const char *filename, struct stat st, uint8_t *file) {
 	return 0;
 }
 
+#define ROUND_UP(x) (((x) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
+
 int map_file(const char *filename, data_t *data) {
 	int		fd;
 	uint8_t	*file;
@@ -141,6 +143,8 @@ int map_file(const char *filename, data_t *data) {
 		close(fd);
 		return -1;
 	} JUNK;
+
+	_printf("rounded up size: %x\n", ROUND_UP(size));
 	
 	close(fd);
 

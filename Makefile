@@ -31,8 +31,8 @@ override deps := $(srcs:%.c=%.d)
 override cflags := -fpic -nostdlib -I./inc -fcf-protection=none -O0 -std=c17 \
 					-fno-jump-tables \
 					-Wno-unused-function \
-					-Wall -Wextra -Werror -Wpedantic
-					#-g3
+					-Wall -Wextra -Werror -Wpedantic \
+					-g3
 # -g
 #-fomit-frame-pointer \
 
