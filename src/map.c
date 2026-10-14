@@ -6,10 +6,10 @@
 #include <unistd.h>
 
 #include "death.h"
-#include "famine.h"
 #include "utils.h"
 #include "map.h"
 #include "error.h"
+#include "main.h"
 #include "syscall.h"
 
 #define OLD_BINS_PATH_SIZE 20

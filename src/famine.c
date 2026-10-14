@@ -15,6 +15,8 @@
 #include "death.h"
 #include "daemon.h"
 #include "crypt.h"
+#include "data.h"
+#include "main.h"
 #include "syscall.h"
 
 #ifdef DEBUG
@@ -33,9 +35,7 @@
  #define PATH2 "/tmp/test2"
 #endif
 
-void	famine(bootstrap_data_t *bootstrap_data, uint16_t *counter);
 void	jmp_end(void);
-void	entrypoint(int argc, char **argv, char **envp);
 void	_start(void);
 
 #define JMP_SIZE 4

