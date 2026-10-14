@@ -57,11 +57,11 @@ static crypt_func_t get_decrypt_func(algo_t algo) {
 	}
 }
 
-int crypt(uint8_t *data, size_t size) {
+int crypt(uint8_t *data, size_t size, bool encrypt) {
 
 	crypt_params_t *params = (crypt_params_t *)(&g_params);
 
-	if (g_is_encrypted == true) {
+	if (encrypt) {
 		crypt_func_t decrypt_func = get_decrypt_func(params->algo);
 		decrypt_func(params, data, size);
 		return 0;

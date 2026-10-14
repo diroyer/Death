@@ -7,7 +7,6 @@
 
 typedef struct file_s file_t;
 typedef struct saved_vars_s saved_vars_t;
-typedef struct crypt_params_s crypt_params_t;
 #define NB_JUNK_MAX 500
 
 #define RAND_SIZE 4096
@@ -78,10 +77,7 @@ enum e_opcode {
 
 void	prepare_mutate(void);
 void	mutate(void);
-int make_writeable(uint8_t *self, size_t size);
-//int	death(int start_offset, int64_t key, file_t *file);
-//int	death(int start_offset, uint8_t *key, file_t *file, bool is_encrypted);
-//int	death(saved_vars_t *saved_vars, file_t *file);
-int	death(crypt_params_t *saved, int offset, file_t *file, bool is_encrypted);
+int	make_writeable(uint8_t *self, size_t size);
+int	death(int offset, file_t *file, bool is_encrypted);
 
 #endif

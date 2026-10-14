@@ -144,8 +144,6 @@ int map_file(const char *filename, data_t *data) {
 		return -1;
 	} JUNK;
 
-	_printf("rounded up size: %x\n", ROUND_UP(size));
-	
 	close(fd);
 
 	data->elf.size = st.st_size;

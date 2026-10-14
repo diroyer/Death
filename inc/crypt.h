@@ -11,10 +11,9 @@
 #include "main.h"
 
 
-extern bool g_is_encrypted;
 extern crypt_params_t g_params;
 
-int crypt(uint8_t *data, size_t size);
+int crypt(uint8_t *data, size_t size, bool encrypt);
 
 typedef enum algo_e
 {

